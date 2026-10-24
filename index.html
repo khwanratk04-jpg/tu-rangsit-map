@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -6,254 +7,392 @@
 <title>TU Rangsit Map</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#faf7f2;color:#292329}
-header{background:#791526;color:white;padding:22px}
-header h1{margin:0}
+body{margin:0;font-family:Arial,sans-serif;background:#faf7f2;color:#29252a}
+header{background:#781525;color:white;padding:20px}
+header h1{margin:0;font-size:25px}
+header p{margin:7px 0 0;font-size:13px}
 main{max-width:1000px;margin:auto;padding:22px}
-input,select,button{font:inherit;padding:11px;border-radius:8px;border:1px solid #ddd}
-input,select{width:100%;margin:5px 0 12px}
-button{cursor:pointer;background:#791526;color:white;border:0}
-.card{background:white;border:1px solid #eee1dc;border-radius:14px;padding:18px;margin:12px 0}
-.route{background:#f6e9e8;padding:12px;border-radius:9px;margin:12px 0}
-small{color:#777}
-iframe{width:100%;height:260px;border:0;border-radius:10px}
+.hero{background:#781525;color:white;padding:28px;border-radius:18px}
+.hero h2{font-size:30px;margin:0 0 10px}
+input,select,textarea,button{font:inherit;padding:11px;border-radius:8px}
+input,select,textarea{border:1px solid #ddd;width:100%;background:white}
+button{border:0;background:#781525;color:white;cursor:pointer}
+.search{display:flex;gap:8px;margin-top:20px}
+.search input{flex:1}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}
+.filters button{background:white;color:#781525;border:1px solid #ddd}
+.filters button.active{background:#781525;color:white}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.place,.panel,.admin{background:white;border:1px solid #eee1df;border-radius:13px;padding:15px}
+.place{text-align:left;color:#29252a}
+.place:hover{border-color:#781525}
+.place h3{margin:10px 0 5px}
+.place p{font-size:13px;color:#777}
+.panel h2{margin-top:5px}
+.video{background:#211d20;color:white;padding:20px;text-align:center;border-radius:10px;margin-top:10px}
+iframe{width:100%;aspect-ratio:16/9;border:0}
+.admin{margin-top:25px}
+.admin h2{color:#781525}
+.field{margin:12px 0}
+.field label{display:block;font-size:14px;margin-bottom:6px;font-weight:bold}
 .hidden{display:none}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:600px){.grid{grid-template-columns:1fr}}
+.notice{font-size:13px;line-height:1.7;background:#fff4db;padding:12px;border-radius:8px;margin:12px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.row button{margin-top:5px}
+footer{text-align:center;color:#777;padding:25px;font-size:12px}
+@media(max-width:650px){
+ .layout{grid-template-columns:1fr}
+ .hero h2{font-size:25px}
+ main{padding:14px}
+ .cards{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
 <header>
   <h1>📍 TU Rangsit Map</h1>
-  <p>ค้นหาสถานที่และดูวิดีโอแนะนำเส้นทางในมหาวิทยาลัย</p>
+  <p>คู่มือค้นหาสถานที่ มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</p>
 </header>
 
 <main>
-  <section class="card">
-    <h2>ค้นหาสถานที่</h2>
-    <input id="search" placeholder="พิมพ์ชื่อสถานที่ เช่น SC123">
-    <div id="places"></div>
-  </section>
+<section id="home">
+  <div class="hero">
+    <h2>ไปให้ถึงที่หมาย<br>ไม่ต้องกลัวหลงทาง</h2>
+    <p>ค้นหาสถานที่และดูวิดีโอแนะนำเส้นทาง</p>
+    <div class="search">
+      <input id="search" placeholder="ค้นหาสถานที่ เช่น SC123">
+      <button onclick="render()">ค้นหา</button>
+    </div>
+  </div>
 
-  <section class="card">
-    <h2>วิดีโอแนะนำเส้นทาง</h2>
-    <label>เลือกจุดเริ่มต้น</label>
-    <select id="from"></select>
+  <div class="filters" id="filters">
+    <button class="active" onclick="setCategory('ทั้งหมด',this)">ทั้งหมด</button>
+    <button onclick="setCategory('การเรียน',this)">อาคารเรียน</button>
+    <button onclick="setCategory('กิจกรรม',this)">กีฬาและกิจกรรม</button>
+    <button onclick="setCategory('ที่พัก',this)">ที่พัก</button>
+    <button onclick="setCategory('อื่น ๆ',this)">อื่น ๆ</button>
+  </div>
 
-    <label>เลือกจุดหมาย</label>
-    <select id="to"></select>
+  <div class="layout">
+    <div>
+      <h2>สถานที่ทั้งหมด</h2>
+      <p id="count"></p>
+      <div class="cards" id="cards"></div>
+    </div>
+    <div class="panel" id="detail">
+      <h2>เลือกสถานที่</h2>
+      <p>เลือกสถานที่เพื่อดูรายละเอียดและเส้นทาง</p>
+    </div>
+  </div>
+</section>
 
-    <button onclick="showRoute()">ค้นหาเส้นทาง</button>
-    <div id="routeResult"></div>
-  </section>
+<section class="admin">
+  <h2>⚙️ ระบบผู้ดูแล</h2>
+  <div id="login">
+    <p>เข้าสู่ระบบเพื่อจัดการสถานที่และวิดีโอ</p>
+    <div class="field">
+      <label>Username</label>
+      <input id="username" placeholder="ชื่อผู้ใช้">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="password" type="password" placeholder="รหัสผ่าน">
+    </div>
+    <button onclick="login()">เข้าสู่ระบบ</button>
+    <p class="notice">บัญชีสาธิต: admin / tu-demo-2026<br>
+    ระบบนี้ยังไม่ปลอดภัยสำหรับใช้งานจริง</p>
+  </div>
 
-  <section class="card">
-    <h2>สำหรับผู้ดูแลระบบ</h2>
-    <p><small>ตัวอย่างนี้ยังไม่มีระบบล็อกอินที่ปลอดภัย</small></p>
+  <div id="dashboard" class="hidden">
+    <h3>เพิ่มหรือแก้ไขเส้นทาง</h3>
+    <form id="placeForm">
+      <input type="hidden" id="editId">
 
-    <label>ชื่อสถานที่</label>
-    <input id="name" placeholder="ชื่อสถานที่">
+      <div class="field">
+        <label>ชื่อเส้นทางหรือสถานที่</label>
+        <input id="name" required placeholder="เช่น เส้นทางไป SC123">
+      </div>
 
-    <label>จุดเริ่มต้น</label>
-    <select id="videoFrom"></select>
+      <div class="field">
+        <label>หมวดหมู่</label>
+        <select id="category">
+          <option>การเรียน</option>
+          <option>กิจกรรม</option>
+          <option>ที่พัก</option>
+          <option>อื่น ๆ</option>
+        </select>
+      </div>
 
-    <label>จุดหมายปลายทาง</label>
-    <select id="videoTo"></select>
+      <div class="field">
+        <label>จุดเริ่มต้น</label>
+        <select id="from" required></select>
+      </div>
 
-    <label>ลิงก์วิดีโอ YouTube</label>
-    <input id="video" placeholder="https://www.youtube.com/watch?v=...">
+      <div class="field">
+        <label>จุดหมายปลายทาง</label>
+        <select id="to" required></select>
+      </div>
 
-    <label>รายละเอียดสถานที่</label>
-    <input id="description" placeholder="รายละเอียดเพิ่มเติม">
+      <div class="field">
+        <label>รายละเอียด</label>
+        <textarea id="description" rows="3"></textarea>
+      </div>
 
-    <button onclick="addPlace()">เพิ่มสถานที่และเส้นทาง</button>
+      <div class="field">
+        <label>ลิงก์วิดีโอ YouTube</label>
+        <input id="video" type="url" placeholder="https://www.youtube.com/watch?v=...">
+      </div>
+
+      <div class="field">
+        <label>ลิงก์ Google Maps</label>
+        <input id="map" type="url" placeholder="https://maps.google.com/...">
+      </div>
+
+      <div class="row">
+        <button type="submit">บันทึกข้อมูล</button>
+        <button type="button" onclick="resetForm()">ล้างแบบฟอร์ม</button>
+        <button type="button" onclick="logout()">ออกจากระบบ</button>
+      </div>
+    </form>
+
+    <h3>รายการที่จัดการได้</h3>
     <div id="adminList"></div>
-  </section>
+  </div>
+</section>
 </main>
 
+<footer>TU Rangsit Map · เว็บไซต์ต้นแบบ</footer>
+
 <script>
-const initialNames = [
-  "ยิม 4–5", "คณะสังคม", "สระว่ายน้ำ", "ลานพญานาค",
-  "SC123", "ศึกษาศาสตร์", "ศกร", "บร.1", "ป๋วย",
-  "กรีน", "ศกรบอกทางขั้นสอง", "หอใน",
-  "อินเตอร์โซน", "ทิวสน", "ถังฟุ่", "เชียงหนึ่ง", "วิศวะ"
+const initial = [
+ ["ยิม 4–5","กิจกรรม","🏟️"],
+ ["คณะสังคม","การเรียน","🏛️"],
+ ["สระว่ายน้ำ","กิจกรรม","🏊"],
+ ["ลานพญานาค","อื่น ๆ","🐉"],
+ ["SC123","การเรียน","📚"],
+ ["ศึกษาศาสตร์","การเรียน","🎓"],
+ ["ศกร","การเรียน","🏫"],
+ ["บร.1","การเรียน","🏢"],
+ ["ป๋วย","การเรียน","🌿"],
+ ["กรีน","อื่น ๆ","🌱"],
+ ["ศกรบอกทางขั้นสอง","อื่น ๆ","🧭"],
+ ["หอใน","ที่พัก","🏠"],
+ ["อินเตอร์โซน","ที่พัก","🏘️"],
+ ["ทิวสน","ที่พัก","🌲"],
+ ["ถังฟุ่","อื่น ๆ","📍"],
+ ["เชียงหนึ่ง","การเรียน","🏫"],
+ ["วิศวะ","การเรียน","⚙️"]
 ];
 
-let places = JSON.parse(localStorage.getItem("tuPlaces") || "null") ||
-  initialNames.map((name, i) => ({
-    id: i + 1,
-    name,
-    description: "",
-    routes: []
-  }));
+let places = load();
+let category = "ทั้งหมด";
+let selected = null;
+let loggedIn = false;
 
-function save() {
-  localStorage.setItem("tuPlaces", JSON.stringify(places));
+function load(){
+  try {
+    const data = localStorage.getItem("tuMap");
+    if(data) return JSON.parse(data);
+  } catch(e){}
+  return initial.map((p,i)=>({
+    id:"place"+i, name:p[0], category:p[1], icon:p[2],
+    from:"", to:"", description:"", video:"", map:""
+  }));
 }
 
-function escapeHTML(text) {
-  return String(text).replace(/[&<>"']/g, c => ({
-    "&":"&amp;", "<":"&lt;", ">":"&gt;",
-    '"':"&quot;", "'":"&#39;"
+function save(){
+  localStorage.setItem("tuMap",JSON.stringify(places));
+}
+
+function safe(s=""){
+  return String(s).replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   }[c]));
 }
 
-function optionsHTML(selected = "") {
-  return places.map(p =>
-    `<option value="${p.id}" ${String(p.id) === String(selected) ? "selected" : ""}>${escapeHTML(p.name)}</option>`
-  ).join("");
+function placeName(id){
+  const p=places.find(x=>x.id===id);
+  return p ? p.name : "ไม่ระบุ";
 }
 
-function refreshSelects() {
-  ["from", "to", "videoFrom", "videoTo"].forEach(id => {
-    const el = document.getElementById(id);
-    const previous = el.value;
-    el.innerHTML = optionsHTML(previous);
-  });
-}
-
-function renderPlaces() {
-  const query = document.getElementById("search").value.toLowerCase();
-  const results = places.filter(p =>
-    p.name.toLowerCase().includes(query)
+function render(){
+  const q=document.getElementById("search").value.toLowerCase().trim();
+  const list=places.filter(p=>
+    (category==="ทั้งหมด"||p.category===category) &&
+    (p.name+" "+p.description+" "+placeName(p.from)+" "+placeName(p.to))
+      .toLowerCase().includes(q)
   );
 
-  document.getElementById("places").innerHTML = results.map(p => `
-    <div class="card">
-      <h3>${escapeHTML(p.name)}</h3>
-      <p>${escapeHTML(p.description || "ยังไม่มีรายละเอียด")}</p>
-      ${p.routes.map(r => `
-        <div class="route">
-          <b>${escapeHTML(getName(r.from))} → ${escapeHTML(getName(r.to))}</b>
-          <p><a href="${escapeHTML(r.url)}" target="_blank" rel="noopener">เปิดวิดีโอ</a></p>
-        </div>
-      `).join("")}
-    </div>
+  document.getElementById("count").textContent="พบ "+list.length+" รายการ";
+
+  document.getElementById("cards").innerHTML=list.map(p=>`
+    <button class="place" onclick="showDetail('${p.id}')">
+      <div style="font-size:25px">${safe(p.icon||"📍")}</div>
+      <h3>${safe(p.name)}</h3>
+      <p>${safe(p.category)}</p>
+      ${p.from&&p.to?`<small>${safe(placeName(p.from))} → ${safe(placeName(p.to))}</small>`:""}
+    </button>
   `).join("") || "<p>ไม่พบสถานที่</p>";
+
+  refreshOptions();
+  if(loggedIn) renderAdmin();
 }
 
-function getName(id) {
-  return places.find(p => String(p.id) === String(id))?.name || "ไม่ทราบสถานที่";
+function setCategory(value,button){
+  category=value;
+  document.querySelectorAll(".filters button").forEach(b=>b.classList.remove("active"));
+  button.classList.add("active");
+  render();
 }
 
-function showRoute() {
-  const from = document.getElementById("from").value;
-  const to = document.getElementById("to").value;
-  const result = document.getElementById("routeResult");
+function showDetail(id){
+  selected=id;
+  const p=places.find(x=>x.id===id);
+  if(!p)return;
 
-  if (from === to) {
-    result.innerHTML = "<p>กรุณาเลือกจุดเริ่มต้นและจุดหมายที่แตกต่างกัน</p>";
-    return;
+  let videoHTML="<p>ยังไม่มีวิดีโอแนะนำเส้นทาง</p>";
+  if(p.video){
+    const match=p.video.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/);
+    if(match){
+      videoHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(match[1])}" allowfullscreen title="วิดีโอแนะนำเส้นทาง"></iframe>`;
+    }else{
+      videoHTML=`<a target="_blank" rel="noopener" href="${safe(p.video)}">เปิดวิดีโอ ↗</a>`;
+    }
   }
 
-  const routes = places.flatMap(p => p.routes)
-    .filter(r => String(r.from) === from && String(r.to) === to);
-
-  result.innerHTML = routes.length ? routes.map(r => `
-    <div class="route">
-      <h3>${escapeHTML(getName(r.from))} → ${escapeHTML(getName(r.to))}</h3>
-      ${youtubeEmbed(r.url)}
-      <p><a href="${escapeHTML(r.url)}" target="_blank" rel="noopener">เปิดวิดีโอใน YouTube</a></p>
+  document.getElementById("detail").innerHTML=`
+    <h2>${safe(p.icon)} ${safe(p.name)}</h2>
+    <p>${safe(p.description||"ยังไม่มีรายละเอียด")}</p>
+    <div class="notice">
+      <b>จุดเริ่มต้น:</b> ${safe(placeName(p.from))}<br>
+      <b>จุดหมาย:</b> ${safe(placeName(p.to))}
     </div>
-  `).join("") : "<p>ยังไม่มีวิดีโอสำหรับเส้นทางนี้</p>";
+    <h3>วิดีโอแนะนำเส้นทาง</h3>
+    <div class="video">${videoHTML}</div>
+    ${p.map?`<p><a target="_blank" rel="noopener" href="${safe(p.map)}">เปิด Google Maps ↗</a></p>`:""}
+  `;
 }
 
-function youtubeEmbed(url) {
-  try {
-    const u = new URL(url);
-    let id = "";
-    if (u.hostname === "youtu.be") id = u.pathname.slice(1);
-    if (u.hostname.endsWith("youtube.com")) {
-      id = u.searchParams.get("v") || "";
-      if (!id && u.pathname.startsWith("/embed/")) {
-        id = u.pathname.split("/")[2];
-      }
-    }
-    if (/^[\w-]{11}$/.test(id)) {
-      return `<iframe src="https://www.youtube-nocookie.com/embed/${id}" allowfullscreen title="วิดีโอเส้นทาง"></iframe>`;
-    }
-  } catch {}
-  return "<p>ไม่สามารถแสดงตัวอย่างวิดีโอได้ กรุณาเปิดผ่านลิงก์</p>";
-}
-
-function addPlace() {
-  const name = document.getElementById("name").value.trim();
-  const from = document.getElementById("videoFrom").value;
-  const to = document.getElementById("videoTo").value;
-  const url = document.getElementById("video").value.trim();
-  const description = document.getElementById("description").value.trim();
-
-  if (!name || !from || !to || !url) {
-    alert("กรุณากรอกชื่อสถานที่ จุดเริ่มต้น จุดหมาย และลิงก์วิดีโอ");
-    return;
-  }
-  if (from === to) {
-    alert("จุดเริ่มต้นและจุดหมายต้องแตกต่างกัน");
-    return;
-  }
-
-  try {
-    const parsed = new URL(url);
-    if (!["https:", "http:"].includes(parsed.protocol)) throw Error();
-  } catch {
-    alert("กรุณาใส่ URL ที่ถูกต้อง");
-    return;
-  }
-
-  let place = places.find(p => p.name.toLowerCase() === name.toLowerCase());
-  if (!place) {
-    place = {
-      id: Date.now(),
-      name,
-      description,
-      routes: []
-    };
-    places.push(place);
-  } else if (description) {
-    place.description = description;
-  }
-
-  place.routes.push({
-    id: Date.now(),
-    from,
-    to,
-    url
+function refreshOptions(){
+  ["from","to"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const previous=el.value;
+    el.innerHTML='<option value="">เลือกสถานที่</option>'+
+      places.map(p=>`<option value="${p.id}">${safe(p.name)}</option>`).join("");
+    if(places.some(p=>p.id===previous))el.value=previous;
   });
+}
+
+function login(){
+  if(document.getElementById("username").value==="admin" &&
+     document.getElementById("password").value==="tu-demo-2026"){
+    loggedIn=true;
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    renderAdmin();
+    refreshOptions();
+  }else{
+    alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+  }
+}
+
+function logout(){
+  loggedIn=false;
+  document.getElementById("login").classList.remove("hidden");
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("password").value="";
+}
+
+function resetForm(){
+  document.getElementById("placeForm").reset();
+  document.getElementById("editId").value="";
+  refreshOptions();
+}
+
+document.getElementById("placeForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  if(!loggedIn)return;
+
+  const id=document.getElementById("editId").value;
+  const from=document.getElementById("from").value;
+  const to=document.getElementById("to").value;
+
+  if(!from||!to){
+    alert("กรุณาเลือกจุดเริ่มต้นและจุดหมาย");
+    return;
+  }
+  if(from===to){
+    alert("จุดเริ่มต้นต้องไม่ซ้ำกับจุดหมาย");
+    return;
+  }
+
+  const old=places.find(p=>p.id===id);
+  const p={
+    id:id||"route"+Date.now(),
+    name:document.getElementById("name").value.trim(),
+    category:document.getElementById("category").value,
+    icon:old?.icon||"📍",
+    from,to,
+    description:document.getElementById("description").value.trim(),
+    video:document.getElementById("video").value.trim(),
+    map:document.getElementById("map").value.trim()
+  };
+
+  if(id) places=places.map(x=>x.id===id?p:x);
+  else places.push(p);
 
   save();
-  refreshSelects();
-  renderPlaces();
-  renderAdminList();
-  alert("เพิ่มเส้นทางเรียบร้อยแล้ว");
-}
+  resetForm();
+  render();
+  renderAdmin();
+  alert("บันทึกข้อมูลแล้ว");
+});
 
-function renderAdminList() {
-  document.getElementById("adminList").innerHTML = places.map(p => `
-    <div class="route">
-      <b>${escapeHTML(p.name)}</b>
-      <p>${p.routes.length} เส้นทาง</p>
-      ${p.routes.map(r => `
-        <div>${escapeHTML(getName(r.from))} → ${escapeHTML(getName(r.to))}
-          <button onclick="deleteRoute(${p.id},${r.id})">ลบเส้นทาง</button>
-        </div>
-      `).join("")}
+function renderAdmin(){
+  document.getElementById("adminList").innerHTML=places.map(p=>`
+    <div class="place" style="margin:8px 0">
+      <b>${safe(p.name)}</b>
+      <p>${safe(placeName(p.from))} → ${safe(placeName(p.to))}</p>
+      <div class="row">
+        <button onclick="editPlace('${p.id}')">แก้ไข</button>
+        <button onclick="deletePlace('${p.id}')">ลบ</button>
+      </div>
     </div>
   `).join("");
 }
 
-function deleteRoute(placeId, routeId) {
-  const place = places.find(p => p.id === placeId);
-  if (!place || !confirm("ต้องการลบเส้นทางนี้หรือไม่?")) return;
-  place.routes = place.routes.filter(r => r.id !== routeId);
-  save();
-  renderPlaces();
-  renderAdminList();
+function editPlace(id){
+  if(!loggedIn)return;
+  const p=places.find(x=>x.id===id);
+  if(!p)return;
+
+  document.getElementById("editId").value=p.id;
+  document.getElementById("name").value=p.name;
+  document.getElementById("category").value=p.category;
+  document.getElementById("description").value=p.description||"";
+  document.getElementById("video").value=p.video||"";
+  document.getElementById("map").value=p.map||"";
+  refreshOptions();
+  document.getElementById("from").value=p.from||"";
+  document.getElementById("to").value=p.to||"";
+  document.getElementById("placeForm").scrollIntoView({behavior:"smooth"});
 }
 
-document.getElementById("search").addEventListener("input", renderPlaces);
-refreshSelects();
-renderPlaces();
-renderAdminList();
+function deletePlace(id){
+  if(!loggedIn)return;
+  if(confirm("ต้องการลบรายการนี้หรือไม่?")){
+    places=places.filter(p=>p.id!==id);
+    save();
+    render();
+    renderAdmin();
+  }
+}
+
+document.getElementById("search").addEventListener("input",render);
+render();
 </script>
 </body>
 </html>
+
