@@ -24,30 +24,31 @@ let data = loadData();
 
 function loadData() {
   try {
+  
+function loadData() {
+  try {
     const saved = localStorage.getItem(STORAGE_KEY);
 
     if (saved) {
       const parsed = JSON.parse(saved);
 
-      if (Array.isArray(parsed.places) && Array.isArray(parsed.routes)) {
+      // ใช้ข้อมูลที่บันทึกไว้เฉพาะเมื่อมีสถานที่จริง
+      if (
+        Array.isArray(parsed.places) &&
+        parsed.places.length > 0 &&
+        Array.isArray(parsed.routes)
+      ) {
         return parsed;
       }
     }
   } catch (error) {
-    console.error("ไม่สามารถอ่านข้อมูลที่บันทึกไว้:", error);
+    console.error("อ่านข้อมูลที่บันทึกไว้ไม่สำเร็จ:", error);
   }
 
+  // หากไม่มีข้อมูล หรือรายการสถานที่ว่าง ให้ใช้ข้อมูลตัวอย่าง
   return JSON.parse(JSON.stringify(initialData));
 }
 
-function saveData() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    return true;
-  } catch (error) {
-    console.error("ไม่สามารถบันทึกข้อมูล:", error);
-    showAdminMessage("บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบการตั้งค่าเบราว์เซอร์");
-    return false;
   }
 }
 
