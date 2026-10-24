@@ -38,476 +38,433 @@ button,
 a,
 select,
 input,
-textarea {
-  -webkit-tap-highlight-color: transparent;
+"use strict";
+
+const STORAGE_KEY = "tu-rangsit-map-v3";
+
+const SAMPLE_DATA = {
+  places: [
+    { id: "gym45", name: "ยิม 4-5", category: "กีฬา", description: "อาคารกีฬา" },
+    { id: "social", name: "คณะสังคมสงเคราะห์ศาสตร์", category: "อาคารเรียน", description: "พื้นที่คณะสังคมสงเคราะห์ศาสตร์" },
+    { id: "pool", name: "สระว่ายน้ำ", category: "กีฬา", description: "สระว่ายน้ำภายในมหาวิทยาลัย" },
+    { id: "naga", name: "ลานพญานาค", category: "พื้นที่ส่วนกลาง", description: "ลานนัดพบ" },
+    { id: "sc123", name: "SC123", category: "อาคารเรียน", description: "อาคารเรียน SC123" },
+    { id: "education", name: "ศึกษาศาสตร์", category: "อาคารเรียน", description: "พื้นที่ศึกษาศาสตร์" },
+    { id: "sakor", name: "ศกร", category: "อาคารเรียน", description: "สถานที่ภายในมหาวิทยาลัย" },
+    { id: "bor1", name: "บร.1", category: "อาคารเรียน", description: "อาคาร บร.1" },
+    { id: "puey", name: "ป๋วย", category: "อาคารเรียน", description: "อาคารป๋วย" },
+    { id: "green", name: "กรีน", category: "พื้นที่ส่วนกลาง", description: "พื้นที่กรีน" },
+    { id: "dorm", name: "หอใน", category: "หอพัก", description: "หอพักนักศึกษา" },
+    { id: "interzone", name: "อินเตอร์โซน", category: "พื้นที่ส่วนกลาง", description: "พื้นที่อินเตอร์โซน" },
+    { id: "tiewson", name: "ทิวสน", category: "พื้นที่ส่วนกลาง", description: "บริเวณทิวสน" }
+  ],
+  routes: []
+};
+
+function copySampleData() {
+  return JSON.parse(JSON.stringify(SAMPLE_DATA));
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
 
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  padding: 16px clamp(20px, 6vw, 84px);
-  background: var(--paper);
-  border-bottom: 1px solid var(--line);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  background: var(--maroon);
-  color: white;
-  border-radius: 14px;
-  font-weight: 800;
-  letter-spacing: -1px;
-}
-
-.brand strong,
-.brand small {
-  display: block;
-}
-
-.brand strong {
-  color: var(--maroon);
-  font-size: 17px;
-}
-
-.brand small {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.nav-link {
-  color: var(--maroon);
-  font-weight: 700;
-}
-
-.hero {
-  padding: 76px clamp(22px, 9vw, 130px) 84px;
-  color: white;
-  background:
-    radial-gradient(ellipse at 85% 20%, #9a465b 0%, transparent 36%),
-    linear-gradient(125deg, var(--maroon-dark), var(--maroon));
-}
-
-.eyebrow {
-  margin: 0 0 8px;
-  color: var(--gold);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.7px;
-}
-
-.hero h1 {
-  margin: 12px 0;
-  font-size: clamp(42px, 7vw, 76px);
-  line-height: 1.2;
-  letter-spacing: -1.5px;
-}
-
-.hero h1 span {
-  color: var(--gold);
-}
-
-.hero > p:not(.eyebrow) {
-  max-width: 540px;
-  color: #f0e4e3;
-  margin-bottom: 28px;
-}
-
-.primary-button,
-.secondary-button,
-.danger-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 10px 18px;
-  border: 0;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s, background 0.15s;
-}
-
-.primary-button {
-  background: var(--maroon);
-  color: white;
-}
-
-.hero .primary-button {
-  background: var(--gold);
-  color: var(--maroon-dark);
-}
-
-.primary-button:hover,
-.secondary-button:hover,
-.danger-button:hover {
-  transform: translateY(-1px);
-}
-
-.section {
-  width: min(1100px, calc(100% - 40px));
-  margin: 0 auto;
-  padding: 58px 0;
-}
-
-.section + .section {
-  border-top: 1px solid var(--line);
-}
-
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-.section-heading .eyebrow {
-  color: var(--maroon);
-}
-
-.section-heading h2 {
-  margin: 0;
-  color: var(--maroon-dark);
-  font-size: clamp(25px, 4vw, 34px);
-}
-
-.muted {
-  color: var(--muted);
-  margin: 5px 0 0;
-}
-
-.route-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 14px;
-  padding: 24px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper);
-  box-shadow: 0 10px 35px #4a1b1710;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  min-width: 0;
-}
-
-.field label {
-  color: var(--maroon-dark);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.field input,
-.field select,
-.field textarea,
-.search-box input {
-  width: 100%;
-  min-width: 0;
-  padding: 11px 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: white;
-  color: var(--text);
-  outline: none;
-}
-
-.field input:focus,
-.field select:focus,
-.field textarea:focus,
-.search-box input:focus {
-  border-color: var(--maroon);
-  box-shadow: 0 0 0 3px #781d3515;
-}
-
-.swap-button {
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--cream);
-  color: var(--maroon);
-  font-size: 24px;
-  cursor: pointer;
-}
-
-.route-results {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 18px;
-  margin-top: 20px;
-}
-
-.route-card,
-.place-card,
-.admin-card {
-  padding: 20px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--paper);
-}
-
-.route-card h3,
-.place-card h3,
-.admin-card h3 {
-  margin: 0 0 8px;
-  color: var(--maroon-dark);
-}
-
-.route-points {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 12px 0;
-  font-size: 13px;
-}
-
-.point-tag {
-  padding: 4px 10px;
-  border-radius: 99px;
-  background: #f2e5e5;
-  color: var(--maroon);
-  font-weight: 700;
-}
-
-.video-frame {
-  position: relative;
-  width: 100%;
-  margin-top: 14px;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #21181b;
-  aspect-ratio: 16 / 9;
-}
-
-.video-frame iframe {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-.video-link {
-  display: inline-block;
-  margin-top: 12px;
-  color: var(--maroon);
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: underline;
-}
-
-.search-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 4px 12px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: white;
-  color: var(--maroon);
-}
-
-.search-box input {
-  border: 0;
-  box-shadow: none !important;
-}
-
-.place-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.place-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.place-card h3 {
-  overflow-wrap: anywhere;
-}
-
-.place-card p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.category-tag {
-  align-self: flex-start;
-  padding: 4px 10px;
-  border-radius: 99px;
-  background: #f4eadb;
-  color: #76562b;
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.place-card button {
-  align-self: flex-start;
-  margin-top: auto;
-  padding: 7px 0 0;
-  border: 0;
-  background: transparent;
-  color: var(--maroon);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.admin-section {
-  padding-bottom: 68px;
-}
-
-.admin-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.admin-card h3 {
-  margin-bottom: 18px;
-}
-
-.admin-card .field {
-  margin-bottom: 16px;
-}
-
-.admin-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.secondary-button,
-.file-label {
-  border: 1px solid var(--line);
-  background: var(--paper);
-  color: var(--maroon);
-}
-
-.file-label {
-  cursor: pointer;
-}
-
-.danger-button {
-  background: #f7e5e5;
-  color: #922c2c;
-}
-
-.message {
-  min-height: 0;
-  color: var(--maroon);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.message:empty {
-  display: none;
-}
-
-.notice {
-  padding: 12px 15px;
-  border-left: 3px solid var(--gold);
-  background: #f3eadb;
-  color: #675b4d;
-  font-size: 12px;
-}
-
-.empty-state {
-  grid-column: 1 / -1;
-  padding: 24px;
-  border: 1px dashed #d5c5bc;
-  border-radius: var(--radius);
-  color: var(--muted);
-  text-align: center;
-}
-
-footer {
-  padding: 28px 20px;
-  background: var(--maroon-dark);
-  color: white;
-  text-align: center;
-}
-
-footer p {
-  margin: 4px 0 0;
-  color: #e5d4d5;
-  font-size: 12px;
-}
-
-@media (max-width: 800px) {
-  .route-panel {
-    grid-template-columns: 1fr;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (
+        parsed &&
+        Array.isArray(parsed.places) &&
+        parsed.places.length > 0 &&
+        Array.isArray(parsed.routes)
+      ) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.warn("ใช้ข้อมูลตัวอย่างแทนข้อมูลเดิม", error);
   }
 
-  .swap-button {
-    justify-self: center;
-    transform: rotate(90deg);
-  }
+  return copySampleData();
+}
 
-  .place-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+let appData = loadData();
+
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    return true;
+  } catch (error) {
+    console.error(error);
+    showAdminMessage("บันทึกไม่ได้ เบราว์เซอร์อาจปิดกั้น localStorage");
+    return false;
   }
 }
 
-@media (max-width: 560px) {
-  .topbar {
-    padding: 12px 16px;
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function safeText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+function showAdminMessage(message) {
+  const el = byId("adminMessage");
+  if (el) el.textContent = message;
+}
+
+function showRouteMessage(message) {
+  const el = byId("routeMessage");
+  if (el) el.textContent = message;
+}
+
+function placeName(id) {
+  return appData.places.find(place => place.id === id)?.name || "ไม่พบสถานที่";
+}
+
+/* สร้างตัวเลือกจากรายการสถานที่ */
+function populateSelect(id, placeholder) {
+  const select = byId(id);
+  if (!select) {
+    console.error("ไม่พบ dropdown ใน HTML:", id);
+    return;
   }
 
-  .brand small {
-    max-width: 200px;
-  }
+  const previous = select.value;
+  select.replaceChildren();
 
-  .nav-link {
-    font-size: 12px;
-  }
+  const first = document.createElement("option");
+  first.value = "";
+  first.textContent = placeholder;
+  select.appendChild(first);
 
-  .hero {
-    padding: 55px 24px 62px;
-  }
+  appData.places.forEach(place => {
+    const option = document.createElement("option");
+    option.value = place.id;
+    option.textContent = place.name;
+    select.appendChild(option);
+  });
 
-  .section {
-    width: calc(100% - 28px);
-    padding: 40px 0;
-  }
-
-  .section-heading {
-    align-items: start;
-  }
-
-  .place-grid,
-  .admin-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .route-panel {
-    padding: 16px;
+  if (appData.places.some(place => place.id === previous)) {
+    select.value = previous;
   }
 }
+
+function refreshSelects() {
+  populateSelect("routeFrom", "เลือกต้นทาง");
+  populateSelect("routeTo", "เลือกปลายทาง");
+  populateSelect("adminRouteFrom", "เลือกต้นทางของวิดีโอ");
+  populateSelect("adminRouteTo", "เลือกปลายทางของวิดีโอ");
+}
+
+/* แสดงสถานที่ */
+function renderPlaces() {
+  const container = byId("placeList");
+  const keyword = (byId("placeSearch").value || "").trim().toLowerCase();
+
+  const places = appData.places.filter(place =>
+    [place.name, place.category, place.description]
+      .join(" ")
+      .toLowerCase()
+      .includes(keyword)
+  );
+
+  if (!places.length) {
+    container.innerHTML = '<div class="empty">ไม่พบสถานที่</div>';
+    return;
+  }
+
+  container.innerHTML = places.map(place => `
+    <article class="card">
+      <span class="tag">${safeText(place.category)}</span>
+      <h3>${safeText(place.name)}</h3>
+      <p>${safeText(place.description || "ไม่มีรายละเอียดเพิ่มเติม")}</p>
+      <button class="card-action" type="button"
+        data-select-destination="${safeText(place.id)}">
+        เลือกเป็นปลายทาง →
+      </button>
+    </article>
+  `).join("");
+}
+
+function youtubeId(url) {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
+    let id = "";
+
+    if (host === "youtu.be") {
+      id = parsed.pathname.split("/").filter(Boolean)[0] || "";
+    } else if (
+      ["youtube.com", "m.youtube.com", "youtube-nocookie.com"].includes(host)
+    ) {
+      if (parsed.pathname === "/watch") {
+        id = parsed.searchParams.get("v") || "";
+      } else {
+        id = parsed.pathname.match(/^\/(?:embed|shorts)\/([^/]+)/)?.[1] || "";
+      }
+    }
+
+    return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : "";
+  } catch {
+    return "";
+  }
+}
+
+/* ค้นหาวิดีโอตามต้นทางและปลายทาง */
+function searchRoute() {
+  const from = byId("routeFrom").value;
+  const to = byId("routeTo").value;
+  const results = byId("routeResults");
+
+  results.replaceChildren();
+  showRouteMessage("");
+
+  if (!from || !to) {
+    showRouteMessage("กรุณาเลือกต้นทางและปลายทาง");
+    return;
+  }
+
+  if (from === to) {
+    showRouteMessage("กรุณาเลือกคนละสถานที่");
+    return;
+  }
+
+  const matches = appData.routes.filter(route =>
+    route.from === from && route.to === to
+  );
+
+  if (!matches.length) {
+    showRouteMessage(
+      `ยังไม่มีวิดีโอจาก ${placeName(from)} ไป ${placeName(to)} คุณสามารถเพิ่มวิดีโอในส่วนจัดการข้อมูลด้านล่าง`
+    );
+    return;
+  }
+
+  showRouteMessage(`พบวิดีโอ ${matches.length} รายการ`);
+
+  results.innerHTML = matches.map(route => {
+    const id = youtubeId(route.url);
+
+    return `
+      <article class="card">
+        <h3>${safeText(route.title)}</h3>
+        <p>${safeText(placeName(route.from))} → ${safeText(placeName(route.to))}</p>
+        ${
+          id
+            ? `<iframe class="video"
+                src="https://www.youtube-nocookie.com/embed/${id}"
+                title="${safeText(route.title)}"
+                loading="lazy"
+                allowfullscreen></iframe>`
+            : "<p>ลิงก์ YouTube ไม่ถูกต้อง</p>"
+        }
+        <a class="video-link" href="${safeText(route.url)}"
+          target="_blank" rel="noopener noreferrer">เปิดบน YouTube ↗</a>
+      </article>
+    `;
+  }).join("");
+}
+
+/* เพิ่มสถานที่ */
+byId("placeForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  const name = byId("placeName").value.trim();
+  const category = byId("placeCategory").value;
+  const description = byId("placeDescription").value.trim();
+
+  if (!name) return;
+
+  if (appData.places.some(place => place.name.toLowerCase() === name.toLowerCase())) {
+    showAdminMessage("มีสถานที่ชื่อนี้อยู่แล้ว");
+    return;
+  }
+
+  appData.places.push({
+    id: "place-" + Date.now(),
+    name,
+    category,
+    description
+  });
+
+  if (!saveData()) return;
+
+  event.target.reset();
+  refreshSelects();
+  renderPlaces();
+  showAdminMessage("เพิ่มสถานที่แล้ว");
+});
+
+/* เพิ่มวิดีโอเส้นทาง */
+byId("routeForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  const from = byId("adminRouteFrom").value;
+  const to = byId("adminRouteTo").value;
+  const title = byId("videoTitle").value.trim();
+  const url = byId("videoUrl").value.trim();
+
+  if (!from || !to) {
+    showAdminMessage("กรุณาเลือกต้นทางและปลายทาง");
+    return;
+  }
+
+  if (from === to) {
+    showAdminMessage("ต้นทางและปลายทางต้องต่างกัน");
+    return;
+  }
+
+  if (!youtubeId(url)) {
+    showAdminMessage("กรุณาใช้ลิงก์วิดีโอ YouTube ที่ถูกต้อง");
+    return;
+  }
+
+  appData.routes.push({
+    id: "route-" + Date.now(),
+    from,
+    to,
+    title,
+    url
+  });
+
+  if (!saveData()) return;
+
+  event.target.reset();
+  showAdminMessage("เพิ่มวิดีโอเส้นทางเรียบร้อยแล้ว");
+});
+
+byId("searchRoute").addEventListener("click", searchRoute);
+
+byId("swapRoute").addEventListener("click", () => {
+  const from = byId("routeFrom");
+  const to = byId("routeTo");
+  const oldFrom = from.value;
+  const oldTo = to.value;
+
+  from.value = oldTo;
+  to.value = oldFrom;
+
+  byId("routeResults").replaceChildren();
+  showRouteMessage("");
+});
+
+byId("placeSearch").addEventListener("input", renderPlaces);
+
+byId("placeList").addEventListener("click", event => {
+  const button = event.target.closest("[data-select-destination]");
+  if (!button) return;
+
+  byId("routeTo").value = button.dataset.selectDestination;
+  byId("route").scrollIntoView({ behavior: "smooth" });
+  showRouteMessage("เลือกปลายทางแล้ว กรุณาเลือกต้นทาง");
+});
+
+/* ส่งออกข้อมูล */
+byId("exportData").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(appData, null, 2)], {
+    type: "application/json"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "tu-rangsit-map-data.json";
+  link.click();
+  URL.revokeObjectURL(url);
+});
+
+/* นำเข้าข้อมูล */
+byId("importFile").addEventListener("change", async event => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const imported = JSON.parse(await file.text());
+
+    if (
+      !imported ||
+      !Array.isArray(imported.places) ||
+      imported.places.length === 0 ||
+      !Array.isArray(imported.routes)
+    ) {
+      throw new Error("ไฟล์ต้องมีรายการ places และ routes");
+    }
+
+    const ids = new Set(imported.places.map(place => place.id));
+
+    const validPlaces = imported.places.every(place =>
+      place &&
+      typeof place.id === "string" &&
+      typeof place.name === "string" &&
+      typeof place.category === "string"
+    );
+
+    const validRoutes = imported.routes.every(route =>
+      route &&
+      typeof route.from === "string" &&
+      typeof route.to === "string" &&
+      typeof route.title === "string" &&
+      typeof route.url === "string" &&
+      ids.has(route.from) &&
+      ids.has(route.to) &&
+      youtubeId(route.url)
+    );
+
+    if (!validPlaces || !validRoutes) {
+      throw new Error("ข้อมูลสถานที่หรือวิดีโอไม่ถูกต้อง");
+    }
+
+    const oldData = appData;
+    appData = imported;
+
+    if (!saveData()) {
+      appData = oldData;
+      return;
+    }
+
+    refreshSelects();
+    renderPlaces();
+    showAdminMessage("นำเข้าข้อมูลเรียบร้อยแล้ว");
+  } catch (error) {
+    showAdminMessage("นำเข้าไม่สำเร็จ: " + error.message);
+  }
+
+  event.target.value = "";
+});
+
+/* คืนค่ารายชื่อสถานที่ตัวอย่าง */
+byId("resetData").addEventListener("click", () => {
+  if (!confirm("คืนค่าข้อมูลตัวอย่างใช่หรือไม่? ข้อมูลที่เพิ่มไว้จะถูกแทนที่")) {
+    return;
+  }
+
+  appData = copySampleData();
+
+  if (!saveData()) return;
+
+  refreshSelects();
+  renderPlaces();
+  byId("routeResults").replaceChildren();
+  showRouteMessage("");
+  showAdminMessage("คืนค่าข้อมูลตัวอย่างแล้ว");
+});
+
+/* เริ่มต้นหลังจาก HTML โหลดครบ */
+function initializeApp() {
+  refreshSelects();
+  renderPlaces();
+
+  console.log("TU Rangsit Map พร้อมใช้งาน");
+  console.log("จำนวนสถานที่:", appData.places.length);
+  console.log("จำนวนวิดีโอ:", appData.routes.length);
+}
+
+initializeApp();
+
