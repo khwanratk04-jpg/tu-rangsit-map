@@ -1,401 +1,185 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TU Rangsit Map</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#faf7f2;color:#29252a}
-header{background:#781525;color:white;padding:20px}
-header h1{margin:0;font-size:25px}
-header p{margin:7px 0 0;font-size:13px}
-main{max-width:1000px;margin:auto;padding:22px}
-.hero{background:#781525;color:white;padding:28px;border-radius:18px}
-.hero h2{font-size:30px;margin:0 0 10px}
-input,select,textarea,button{font:inherit;padding:11px;border-radius:8px}
-input,select,textarea{border:1px solid #ddd;width:100%;background:white}
-button{border:0;background:#781525;color:white;cursor:pointer}
-.search{display:flex;gap:8px;margin-top:20px}
-.search input{flex:1}
-.filters{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}
-.filters button{background:white;color:#781525;border:1px solid #ddd}
-.filters button.active{background:#781525;color:white}
-.layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.place,.panel,.admin{background:white;border:1px solid #eee1df;border-radius:13px;padding:15px}
-.place{text-align:left;color:#29252a}
-.place:hover{border-color:#781525}
-.place h3{margin:10px 0 5px}
-.place p{font-size:13px;color:#777}
-.panel h2{margin-top:5px}
-.video{background:#211d20;color:white;padding:20px;text-align:center;border-radius:10px;margin-top:10px}
-iframe{width:100%;aspect-ratio:16/9;border:0}
-.admin{margin-top:25px}
-.admin h2{color:#781525}
-.field{margin:12px 0}
-.field label{display:block;font-size:14px;margin-bottom:6px;font-weight:bold}
-.hidden{display:none}
-.notice{font-size:13px;line-height:1.7;background:#fff4db;padding:12px;border-radius:8px;margin:12px 0}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.row button{margin-top:5px}
-footer{text-align:center;color:#777;padding:25px;font-size:12px}
-@media(max-width:650px){
- .layout{grid-template-columns:1fr}
- .hero h2{font-size:25px}
- main{padding:14px}
- .cards{grid-template-columns:1fr 1fr}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TU Rangsit Map</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
-<header>
-  <h1>📍 TU Rangsit Map</h1>
-  <p>คู่มือค้นหาสถานที่ มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</p>
-</header>
+  <header class="topbar">
+    <a class="brand" href="#">
+      <span class="brand-mark">TU</span>
+      <span>
+        <strong>TU Rangsit Map</strong>
+        <small>แผนที่นำทาง มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</small>
+      </span>
+    </a>
+    <a class="nav-link" href="#route">ค้นหาเส้นทาง</a>
+  </header>
 
-<main>
-<section id="home">
-  <div class="hero">
-    <h2>ไปให้ถึงที่หมาย<br>ไม่ต้องกลัวหลงทาง</h2>
-    <p>ค้นหาสถานที่และดูวิดีโอแนะนำเส้นทาง</p>
-    <div class="search">
-      <input id="search" placeholder="ค้นหาสถานที่ เช่น SC123">
-      <button onclick="render()">ค้นหา</button>
-    </div>
-  </div>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">THAMMASAT UNIVERSITY · RANGSIT</p>
+      <h1>ไปที่ไหน<br><span>ก็หาทางเจอ</span></h1>
+      <p>ค้นหาสถานที่และดูวิดีโอแนะนำเส้นทางภายในมหาวิทยาลัย</p>
+      <a class="primary-button" href="#route">เริ่มค้นหาเส้นทาง</a>
+    </section>
 
-  <div class="filters" id="filters">
-    <button class="active" onclick="setCategory('ทั้งหมด',this)">ทั้งหมด</button>
-    <button onclick="setCategory('การเรียน',this)">อาคารเรียน</button>
-    <button onclick="setCategory('กิจกรรม',this)">กีฬาและกิจกรรม</button>
-    <button onclick="setCategory('ที่พัก',this)">ที่พัก</button>
-    <button onclick="setCategory('อื่น ๆ',this)">อื่น ๆ</button>
-  </div>
-
-  <div class="layout">
-    <div>
-      <h2>สถานที่ทั้งหมด</h2>
-      <p id="count"></p>
-      <div class="cards" id="cards"></div>
-    </div>
-    <div class="panel" id="detail">
-      <h2>เลือกสถานที่</h2>
-      <p>เลือกสถานที่เพื่อดูรายละเอียดและเส้นทาง</p>
-    </div>
-  </div>
-</section>
-
-<section class="admin">
-  <h2>⚙️ ระบบผู้ดูแล</h2>
-  <div id="login">
-    <p>เข้าสู่ระบบเพื่อจัดการสถานที่และวิดีโอ</p>
-    <div class="field">
-      <label>Username</label>
-      <input id="username" placeholder="ชื่อผู้ใช้">
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input id="password" type="password" placeholder="รหัสผ่าน">
-    </div>
-    <button onclick="login()">เข้าสู่ระบบ</button>
-    <p class="notice">บัญชีสาธิต: admin / tu-demo-2026<br>
-    ระบบนี้ยังไม่ปลอดภัยสำหรับใช้งานจริง</p>
-  </div>
-
-  <div id="dashboard" class="hidden">
-    <h3>เพิ่มหรือแก้ไขเส้นทาง</h3>
-    <form id="placeForm">
-      <input type="hidden" id="editId">
-
-      <div class="field">
-        <label>ชื่อเส้นทางหรือสถานที่</label>
-        <input id="name" required placeholder="เช่น เส้นทางไป SC123">
+    <section class="section" id="route">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DIRECTION FINDER</p>
+          <h2>ค้นหาเส้นทาง</h2>
+          <p class="muted">เลือกจุดเริ่มต้นและสถานที่ที่ต้องการไป</p>
+        </div>
       </div>
 
-      <div class="field">
-        <label>หมวดหมู่</label>
-        <select id="category">
-          <option>การเรียน</option>
-          <option>กิจกรรม</option>
-          <option>ที่พัก</option>
-          <option>อื่น ๆ</option>
-        </select>
+      <div class="route-panel">
+        <div class="field">
+          <label for="routeFrom">ต้นทาง</label>
+          <select id="routeFrom">
+            <option value="">กำลังโหลดสถานที่...</option>
+          </select>
+        </div>
+
+        <button id="swapRoute" class="swap-button" type="button"
+          aria-label="สลับต้นทางและปลายทาง" title="สลับต้นทางและปลายทาง">⇅</button>
+
+        <div class="field">
+          <label for="routeTo">ปลายทาง</label>
+          <select id="routeTo">
+            <option value="">กำลังโหลดสถานที่...</option>
+          </select>
+        </div>
+
+        <button id="searchRoute" class="primary-button" type="button">
+          ค้นหาเส้นทาง
+        </button>
       </div>
 
-      <div class="field">
-        <label>จุดเริ่มต้น</label>
-        <select id="from" required></select>
+      <div id="routeMessage" class="message" aria-live="polite"></div>
+      <div id="routeResults" class="route-results"></div>
+    </section>
+
+    <section class="section" id="places">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">EXPLORE CAMPUS</p>
+          <h2>สถานที่ในมหาวิทยาลัย</h2>
+          <p class="muted">เลือกดูสถานที่ หรือค้นหาจากชื่อ</p>
+        </div>
       </div>
 
-      <div class="field">
-        <label>จุดหมายปลายทาง</label>
-        <select id="to" required></select>
+      <div class="search-box">
+        <span>⌕</span>
+        <input id="placeSearch" type="search"
+          placeholder="ค้นหาชื่อสถานที่ เช่น ยิม 4-5 หรือ SC123">
       </div>
 
-      <div class="field">
-        <label>รายละเอียด</label>
-        <textarea id="description" rows="3"></textarea>
+      <div id="placeList" class="place-grid"></div>
+    </section>
+
+    <section class="section admin-section" id="admin">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">WEBSITE MANAGEMENT</p>
+          <h2>จัดการข้อมูลเว็บไซต์</h2>
+          <p class="muted">เพิ่มสถานที่และวิดีโอเส้นทางสำหรับเครื่องที่ใช้งานอยู่</p>
+        </div>
       </div>
 
-      <div class="field">
-        <label>ลิงก์วิดีโอ YouTube</label>
-        <input id="video" type="url" placeholder="https://www.youtube.com/watch?v=...">
+      <div class="admin-grid">
+        <form id="placeForm" class="admin-card">
+          <h3>เพิ่มสถานที่</h3>
+
+          <div class="field">
+            <label for="placeName">ชื่อสถานที่</label>
+            <input id="placeName" required maxlength="100"
+              placeholder="เช่น อาคารเรียนรวม SC123">
+          </div>
+
+          <div class="field">
+            <label for="placeCategory">ประเภทสถานที่</label>
+            <select id="placeCategory" required>
+              <option value="อาคารเรียน">อาคารเรียน</option>
+              <option value="กีฬา">กีฬา</option>
+              <option value="หอพัก">หอพัก</option>
+              <option value="พื้นที่ส่วนกลาง">พื้นที่ส่วนกลาง</option>
+              <option value="บริการ">บริการ</option>
+              <option value="อื่น ๆ">อื่น ๆ</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="placeDescription">รายละเอียด</label>
+            <textarea id="placeDescription" rows="3"
+              placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
+          </div>
+
+          <button class="primary-button" type="submit">+ เพิ่มสถานที่</button>
+        </form>
+
+        <form id="routeForm" class="admin-card">
+          <h3>เพิ่มวิดีโอแนะนำเส้นทาง</h3>
+
+          <div class="field">
+            <label for="adminRouteFrom">ต้นทางของวิดีโอ</label>
+            <select id="adminRouteFrom" required>
+              <option value="">เลือกต้นทาง</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="adminRouteTo">ปลายทางของวิดีโอ</label>
+            <select id="adminRouteTo" required>
+              <option value="">เลือกปลายทาง</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="videoTitle">ชื่อวิดีโอ</label>
+            <input id="videoTitle" required maxlength="150"
+              placeholder="เช่น จากหอในไปอาคารเรียน">
+          </div>
+
+          <div class="field">
+            <label for="videoUrl">ลิงก์ YouTube</label>
+            <input id="videoUrl" type="url" required
+              placeholder="https://www.youtube.com/watch?v=...">
+          </div>
+
+          <button class="primary-button" type="submit">+ เพิ่มวิดีโอ</button>
+        </form>
       </div>
 
-      <div class="field">
-        <label>ลิงก์ Google Maps</label>
-        <input id="map" type="url" placeholder="https://maps.google.com/...">
+      <div class="admin-actions">
+        <button id="exportData" class="secondary-button" type="button">
+          ส่งออกข้อมูล JSON
+        </button>
+        <label class="secondary-button file-label" for="importFile">
+          นำเข้าข้อมูล JSON
+        </label>
+        <input id="importFile" type="file" accept=".json,application/json" hidden>
+        <button id="resetData" class="danger-button" type="button">
+          คืนค่าข้อมูลตัวอย่าง
+        </button>
       </div>
 
-      <div class="row">
-        <button type="submit">บันทึกข้อมูล</button>
-        <button type="button" onclick="resetForm()">ล้างแบบฟอร์ม</button>
-        <button type="button" onclick="logout()">ออกจากระบบ</button>
-      </div>
-    </form>
+      <p id="adminMessage" class="message" aria-live="polite"></p>
+      <p class="notice">
+        หมายเหตุ: ข้อมูลจะบันทึกในเบราว์เซอร์เครื่องนี้ ยังไม่มีระบบสมาชิกหรือฐานข้อมูลออนไลน์
+        หากเผยแพร่เว็บ คนอื่นจะไม่เห็นข้อมูลที่เพิ่มจากเครื่องของคุณโดยอัตโนมัติ
+      </p>
+    </section>
+  </main>
 
-    <h3>รายการที่จัดการได้</h3>
-    <div id="adminList"></div>
-  </div>
-</section>
-</main>
-
-<footer>TU Rangsit Map · เว็บไซต์ต้นแบบ</footer>
-
-<script>
-const initial = [
- ["ยิม 4–5","กิจกรรม","🏟️"],
- ["คณะสังคม","การเรียน","🏛️"],
- ["สระว่ายน้ำ","กิจกรรม","🏊"],
- ["ลานพญานาค","อื่น ๆ","🐉"],
- ["SC123","การเรียน","📚"],
- ["ศึกษาศาสตร์","การเรียน","🎓"],
- ["ศกร","การเรียน","🏫"],
- ["บร.1","การเรียน","🏢"],
- ["ป๋วย","การเรียน","🌿"],
- ["กรีน","อื่น ๆ","🌱"],
- ["ศกรบอกทางขั้นสอง","อื่น ๆ","🧭"],
- ["หอใน","ที่พัก","🏠"],
- ["อินเตอร์โซน","ที่พัก","🏘️"],
- ["ทิวสน","ที่พัก","🌲"],
- ["ถังฟุ่","อื่น ๆ","📍"],
- ["เชียงหนึ่ง","การเรียน","🏫"],
- ["วิศวะ","การเรียน","⚙️"]
-];
-
-let places = load();
-let category = "ทั้งหมด";
-let selected = null;
-let loggedIn = false;
-
-function load(){
-  try {
-    const data = localStorage.getItem("tuMap");
-    if(data) return JSON.parse(data);
-  } catch(e){}
-  return initial.map((p,i)=>({
-    id:"place"+i, name:p[0], category:p[1], icon:p[2],
-    from:"", to:"", description:"", video:"", map:""
-  }));
-}
-
-function save(){
-  localStorage.setItem("tuMap",JSON.stringify(places));
-}
-
-function safe(s=""){
-  return String(s).replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
-}
-
-function placeName(id){
-  const p=places.find(x=>x.id===id);
-  return p ? p.name : "ไม่ระบุ";
-}
-
-function render(){
-  const q=document.getElementById("search").value.toLowerCase().trim();
-  const list=places.filter(p=>
-    (category==="ทั้งหมด"||p.category===category) &&
-    (p.name+" "+p.description+" "+placeName(p.from)+" "+placeName(p.to))
-      .toLowerCase().includes(q)
-  );
-
-  document.getElementById("count").textContent="พบ "+list.length+" รายการ";
-
-  document.getElementById("cards").innerHTML=list.map(p=>`
-    <button class="place" onclick="showDetail('${p.id}')">
-      <div style="font-size:25px">${safe(p.icon||"📍")}</div>
-      <h3>${safe(p.name)}</h3>
-      <p>${safe(p.category)}</p>
-      ${p.from&&p.to?`<small>${safe(placeName(p.from))} → ${safe(placeName(p.to))}</small>`:""}
-    </button>
-  `).join("") || "<p>ไม่พบสถานที่</p>";
-
-  refreshOptions();
-  if(loggedIn) renderAdmin();
-}
-
-function setCategory(value,button){
-  category=value;
-  document.querySelectorAll(".filters button").forEach(b=>b.classList.remove("active"));
-  button.classList.add("active");
-  render();
-}
-
-function showDetail(id){
-  selected=id;
-  const p=places.find(x=>x.id===id);
-  if(!p)return;
-
-  let videoHTML="<p>ยังไม่มีวิดีโอแนะนำเส้นทาง</p>";
-  if(p.video){
-    const match=p.video.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/);
-    if(match){
-      videoHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(match[1])}" allowfullscreen title="วิดีโอแนะนำเส้นทาง"></iframe>`;
-    }else{
-      videoHTML=`<a target="_blank" rel="noopener" href="${safe(p.video)}">เปิดวิดีโอ ↗</a>`;
-    }
-  }
-
-  document.getElementById("detail").innerHTML=`
-    <h2>${safe(p.icon)} ${safe(p.name)}</h2>
-    <p>${safe(p.description||"ยังไม่มีรายละเอียด")}</p>
-    <div class="notice">
-      <b>จุดเริ่มต้น:</b> ${safe(placeName(p.from))}<br>
-      <b>จุดหมาย:</b> ${safe(placeName(p.to))}
-    </div>
-    <h3>วิดีโอแนะนำเส้นทาง</h3>
-    <div class="video">${videoHTML}</div>
-    ${p.map?`<p><a target="_blank" rel="noopener" href="${safe(p.map)}">เปิด Google Maps ↗</a></p>`:""}
-  `;
-}
-
-function refreshOptions(){
-  ["from","to"].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el)return;
-    const previous=el.value;
-    el.innerHTML='<option value="">เลือกสถานที่</option>'+
-      places.map(p=>`<option value="${p.id}">${safe(p.name)}</option>`).join("");
-    if(places.some(p=>p.id===previous))el.value=previous;
-  });
-}
-
-function login(){
-  if(document.getElementById("username").value==="admin" &&
-     document.getElementById("password").value==="tu-demo-2026"){
-    loggedIn=true;
-    document.getElementById("login").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
-    renderAdmin();
-    refreshOptions();
-  }else{
-    alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
-  }
-}
-
-function logout(){
-  loggedIn=false;
-  document.getElementById("login").classList.remove("hidden");
-  document.getElementById("dashboard").classList.add("hidden");
-  document.getElementById("password").value="";
-}
-
-function resetForm(){
-  document.getElementById("placeForm").reset();
-  document.getElementById("editId").value="";
-  refreshOptions();
-}
-
-document.getElementById("placeForm").addEventListener("submit",e=>{
-  e.preventDefault();
-  if(!loggedIn)return;
-
-  const id=document.getElementById("editId").value;
-  const from=document.getElementById("from").value;
-  const to=document.getElementById("to").value;
-
-  if(!from||!to){
-    alert("กรุณาเลือกจุดเริ่มต้นและจุดหมาย");
-    return;
-  }
-  if(from===to){
-    alert("จุดเริ่มต้นต้องไม่ซ้ำกับจุดหมาย");
-    return;
-  }
-
-  const old=places.find(p=>p.id===id);
-  const p={
-    id:id||"route"+Date.now(),
-    name:document.getElementById("name").value.trim(),
-    category:document.getElementById("category").value,
-    icon:old?.icon||"📍",
-    from,to,
-    description:document.getElementById("description").value.trim(),
-    video:document.getElementById("video").value.trim(),
-    map:document.getElementById("map").value.trim()
-  };
-
-  if(id) places=places.map(x=>x.id===id?p:x);
-  else places.push(p);
-
-  save();
-  resetForm();
-  render();
-  renderAdmin();
-  alert("บันทึกข้อมูลแล้ว");
-});
-
-function renderAdmin(){
-  document.getElementById("adminList").innerHTML=places.map(p=>`
-    <div class="place" style="margin:8px 0">
-      <b>${safe(p.name)}</b>
-      <p>${safe(placeName(p.from))} → ${safe(placeName(p.to))}</p>
-      <div class="row">
-        <button onclick="editPlace('${p.id}')">แก้ไข</button>
-        <button onclick="deletePlace('${p.id}')">ลบ</button>
-      </div>
-    </div>
-  `).join("");
-}
-
-function editPlace(id){
-  if(!loggedIn)return;
-  const p=places.find(x=>x.id===id);
-  if(!p)return;
-
-  document.getElementById("editId").value=p.id;
-  document.getElementById("name").value=p.name;
-  document.getElementById("category").value=p.category;
-  document.getElementById("description").value=p.description||"";
-  document.getElementById("video").value=p.video||"";
-  document.getElementById("map").value=p.map||"";
-  refreshOptions();
-  document.getElementById("from").value=p.from||"";
-  document.getElementById("to").value=p.to||"";
-  document.getElementById("placeForm").scrollIntoView({behavior:"smooth"});
-}
-
-function deletePlace(id){
-  if(!loggedIn)return;
-  if(confirm("ต้องการลบรายการนี้หรือไม่?")){
-    places=places.filter(p=>p.id!==id);
-    save();
-    render();
-    renderAdmin();
-  }
-}
-
-document.getElementById("search").addEventListener("input",render);
-render();
-</script>
-</body>
-</html>
-
-  <script src="script.js"></script>
+  <footer>
+    <strong>TU Rangsit Map</strong>
+    <p>เว็บไซต์ต้นแบบเพื่อช่วยค้นหาสถานที่และเส้นทางภายในมหาวิทยาลัย</p>
+  </footer>
 </body>
 </html>
 
