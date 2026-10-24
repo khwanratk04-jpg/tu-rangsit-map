@@ -1,294 +1,275 @@
 
-:root {
-  --maroon: #781d35;
-  --maroon-dark: #501326;
-  --cream: #faf5ec;
-  --paper: #fffdf9;
-  --text: #2d2525;
-  --muted: #796f6c;
-  --line: #e8ddd5;
-  --gold: #d7b879;
-  --radius: 18px;
-}
+const STORAGE_KEY = "tu-rangsit-map-v2";
 
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  margin: 0;
-  background: var(--cream);
-  color: var(--text);
-  font-family: "Noto Sans Thai", "Tahoma", sans-serif;
-  line-height: 1.65;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button,
-a,
-select,
-input,
-"use strict";
-
-const STORAGE_KEY = "tu-rangsit-map-v3";
-
-const SAMPLE_DATA = {
+const initialData = {
   places: [
-    { id: "gym45", name: "ยิม 4-5", category: "กีฬา", description: "อาคารกีฬา" },
-    { id: "social", name: "คณะสังคมสงเคราะห์ศาสตร์", category: "อาคารเรียน", description: "พื้นที่คณะสังคมสงเคราะห์ศาสตร์" },
-    { id: "pool", name: "สระว่ายน้ำ", category: "กีฬา", description: "สระว่ายน้ำภายในมหาวิทยาลัย" },
-    { id: "naga", name: "ลานพญานาค", category: "พื้นที่ส่วนกลาง", description: "ลานนัดพบ" },
-    { id: "sc123", name: "SC123", category: "อาคารเรียน", description: "อาคารเรียน SC123" },
-    { id: "education", name: "ศึกษาศาสตร์", category: "อาคารเรียน", description: "พื้นที่ศึกษาศาสตร์" },
-    { id: "sakor", name: "ศกร", category: "อาคารเรียน", description: "สถานที่ภายในมหาวิทยาลัย" },
-    { id: "bor1", name: "บร.1", category: "อาคารเรียน", description: "อาคาร บร.1" },
-    { id: "puey", name: "ป๋วย", category: "อาคารเรียน", description: "อาคารป๋วย" },
-    { id: "green", name: "กรีน", category: "พื้นที่ส่วนกลาง", description: "พื้นที่กรีน" },
-    { id: "dorm", name: "หอใน", category: "หอพัก", description: "หอพักนักศึกษา" },
-    { id: "interzone", name: "อินเตอร์โซน", category: "พื้นที่ส่วนกลาง", description: "พื้นที่อินเตอร์โซน" },
-    { id: "tiewson", name: "ทิวสน", category: "พื้นที่ส่วนกลาง", description: "บริเวณทิวสน" }
+    { id: "p1", name: "ยิม 4-5", category: "กีฬา", description: "อาคารกีฬาและกิจกรรม" },
+    { id: "p2", name: "คณะสังคมสงเคราะห์ศาสตร์", category: "อาคารเรียน", description: "พื้นที่คณะสังคมสงเคราะห์ศาสตร์" },
+    { id: "p3", name: "สระว่ายน้ำ", category: "กีฬา", description: "พื้นที่สระว่ายน้ำภายในมหาวิทยาลัย" },
+    { id: "p4", name: "ลานพญานาค", category: "พื้นที่ส่วนกลาง", description: "จุดนัดพบและพื้นที่ส่วนกลาง" },
+    { id: "p5", name: "SC123", category: "อาคารเรียน", description: "อาคารเรียน SC123" },
+    { id: "p6", name: "คณะศึกษาศาสตร์", category: "อาคารเรียน", description: "พื้นที่คณะศึกษาศาสตร์" },
+    { id: "p7", name: "ศกร", category: "อาคารเรียน", description: "สถานที่ภายในมหาวิทยาลัย" },
+    { id: "p8", name: "บร.1", category: "อาคารเรียน", description: "อาคาร บร.1" },
+    { id: "p9", name: "อาคารป๋วย", category: "อาคารเรียน", description: "อาคารป๋วย" },
+    { id: "p10", name: "กรีน", category: "พื้นที่ส่วนกลาง", description: "พื้นที่กรีน" },
+    { id: "p11", name: "หอใน", category: "หอพัก", description: "หอพักนักศึกษาภายในมหาวิทยาลัย" },
+    { id: "p12", name: "อินเตอร์โซน", category: "พื้นที่ส่วนกลาง", description: "พื้นที่อินเตอร์โซน" },
+    { id: "p13", name: "ทิวสน", category: "พื้นที่ส่วนกลาง", description: "บริเวณทิวสน" }
   ],
   routes: []
 };
 
-function copySampleData() {
-  return JSON.parse(JSON.stringify(SAMPLE_DATA));
-}
+let data = loadData();
 
 function loadData() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
 
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (
-        parsed &&
-        Array.isArray(parsed.places) &&
-        parsed.places.length > 0 &&
-        Array.isArray(parsed.routes)
-      ) {
+    if (saved) {
+      const parsed = JSON.parse(saved);
+
+      if (Array.isArray(parsed.places) && Array.isArray(parsed.routes)) {
         return parsed;
       }
     }
   } catch (error) {
-    console.warn("ใช้ข้อมูลตัวอย่างแทนข้อมูลเดิม", error);
+    console.error("ไม่สามารถอ่านข้อมูลที่บันทึกไว้:", error);
   }
 
-  return copySampleData();
+  return JSON.parse(JSON.stringify(initialData));
 }
-
-let appData = loadData();
 
 function saveData() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return true;
   } catch (error) {
-    console.error(error);
-    showAdminMessage("บันทึกไม่ได้ เบราว์เซอร์อาจปิดกั้น localStorage");
+    console.error("ไม่สามารถบันทึกข้อมูล:", error);
+    showAdminMessage("บันทึกข้อมูลไม่สำเร็จ กรุณาตรวจสอบการตั้งค่าเบราว์เซอร์");
     return false;
   }
 }
 
-function byId(id) {
-  return document.getElementById(id);
+function makeId(prefix) {
+  return prefix + "-" + Date.now().toString(36) +
+    "-" + Math.random().toString(36).slice(2, 7);
 }
 
-function safeText(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
+function getPlaceName(id) {
+  const place = data.places.find(item => item.id === id);
+  return place ? place.name : "ไม่พบสถานที่";
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+    "'": "&#039;"
+  })[character]);
 }
 
 function showAdminMessage(message) {
-  const el = byId("adminMessage");
-  if (el) el.textContent = message;
+  const element = document.getElementById("adminMessage");
+  if (element) element.textContent = message;
 }
 
 function showRouteMessage(message) {
-  const el = byId("routeMessage");
-  if (el) el.textContent = message;
+  const element = document.getElementById("routeMessage");
+  if (element) element.textContent = message;
 }
 
-function placeName(id) {
-  return appData.places.find(place => place.id === id)?.name || "ไม่พบสถานที่";
-}
+/* เติมตัวเลือกสถานที่ลงใน dropdown */
+function fillPlaceSelect(selectId, placeholder) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
 
-/* สร้างตัวเลือกจากรายการสถานที่ */
-function populateSelect(id, placeholder) {
-  const select = byId(id);
-  if (!select) {
-    console.error("ไม่พบ dropdown ใน HTML:", id);
-    return;
-  }
+  const previousValue = select.value;
 
-  const previous = select.value;
   select.replaceChildren();
 
-  const first = document.createElement("option");
-  first.value = "";
-  first.textContent = placeholder;
-  select.appendChild(first);
+  const firstOption = document.createElement("option");
+  firstOption.value = "";
+  firstOption.textContent = placeholder;
+  select.appendChild(firstOption);
 
-  appData.places.forEach(place => {
+  data.places.forEach(place => {
     const option = document.createElement("option");
     option.value = place.id;
     option.textContent = place.name;
     select.appendChild(option);
   });
 
-  if (appData.places.some(place => place.id === previous)) {
-    select.value = previous;
+  if (data.places.some(place => place.id === previousValue)) {
+    select.value = previousValue;
   }
 }
 
-function refreshSelects() {
-  populateSelect("routeFrom", "เลือกต้นทาง");
-  populateSelect("routeTo", "เลือกปลายทาง");
-  populateSelect("adminRouteFrom", "เลือกต้นทางของวิดีโอ");
-  populateSelect("adminRouteTo", "เลือกปลายทางของวิดีโอ");
+function refreshPlaceSelects() {
+  fillPlaceSelect("routeFrom", "เลือกต้นทาง");
+  fillPlaceSelect("routeTo", "เลือกปลายทาง");
+  fillPlaceSelect("adminRouteFrom", "เลือกต้นทางของวิดีโอ");
+  fillPlaceSelect("adminRouteTo", "เลือกปลายทางของวิดีโอ");
 }
 
-/* แสดงสถานที่ */
-function renderPlaces() {
-  const container = byId("placeList");
-  const keyword = (byId("placeSearch").value || "").trim().toLowerCase();
+/* แปลงลิงก์ YouTube เป็นลิงก์สำหรับฝังวิดีโอ */
+function getYouTubeId(url) {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
 
-  const places = appData.places.filter(place =>
-    [place.name, place.category, place.description]
-      .join(" ")
+    if (host === "youtu.be") {
+      return parsed.pathname.split("/").filter(Boolean)[0] || null;
+    }
+
+    if (
+      host === "youtube.com" ||
+      host === "m.youtube.com" ||
+      host === "youtube-nocookie.com"
+    ) {
+      if (parsed.pathname === "/watch") {
+        return parsed.searchParams.get("v");
+      }
+
+      const match = parsed.pathname.match(/^\/(?:embed|shorts)\/([^/]+)/);
+      return match ? match[1] : null;
+    }
+  } catch (error) {
+    return null;
+  }
+
+  return null;
+}
+
+function getSafeYouTubeId(url) {
+  const id = getYouTubeId(url);
+  return id && /^[a-zA-Z0-9_-]{6,20}$/.test(id) ? id : null;
+}
+
+/* แสดงสถานที่ทั้งหมด */
+function renderPlaces() {
+  const container = document.getElementById("placeList");
+  const search = document.getElementById("placeSearch");
+  if (!container) return;
+
+  const keyword = (search?.value || "").trim().toLowerCase();
+
+  const filtered = data.places.filter(place =>
+    `${place.name} ${place.category} ${place.description}`
       .toLowerCase()
       .includes(keyword)
   );
 
-  if (!places.length) {
-    container.innerHTML = '<div class="empty">ไม่พบสถานที่</div>';
+  if (!filtered.length) {
+    container.innerHTML =
+      '<div class="empty-state">ไม่พบสถานที่ที่ค้นหา</div>';
     return;
   }
 
-  container.innerHTML = places.map(place => `
-    <article class="card">
-      <span class="tag">${safeText(place.category)}</span>
-      <h3>${safeText(place.name)}</h3>
-      <p>${safeText(place.description || "ไม่มีรายละเอียดเพิ่มเติม")}</p>
-      <button class="card-action" type="button"
-        data-select-destination="${safeText(place.id)}">
+  container.innerHTML = filtered.map(place => `
+    <article class="place-card">
+      <span class="category-tag">${escapeHTML(place.category)}</span>
+      <h3>${escapeHTML(place.name)}</h3>
+      <p>${escapeHTML(place.description || "ไม่มีรายละเอียดเพิ่มเติม")}</p>
+      <button type="button" data-destination="${escapeHTML(place.id)}">
         เลือกเป็นปลายทาง →
       </button>
     </article>
   `).join("");
 }
 
-function youtubeId(url) {
-  try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.toLowerCase().replace(/^www\./, "");
-    let id = "";
-
-    if (host === "youtu.be") {
-      id = parsed.pathname.split("/").filter(Boolean)[0] || "";
-    } else if (
-      ["youtube.com", "m.youtube.com", "youtube-nocookie.com"].includes(host)
-    ) {
-      if (parsed.pathname === "/watch") {
-        id = parsed.searchParams.get("v") || "";
-      } else {
-        id = parsed.pathname.match(/^\/(?:embed|shorts)\/([^/]+)/)?.[1] || "";
-      }
-    }
-
-    return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : "";
-  } catch {
-    return "";
-  }
-}
-
-/* ค้นหาวิดีโอตามต้นทางและปลายทาง */
+/* แสดงผลการค้นหาวิดีโอเส้นทาง */
 function searchRoute() {
-  const from = byId("routeFrom").value;
-  const to = byId("routeTo").value;
-  const results = byId("routeResults");
+  const from = document.getElementById("routeFrom").value;
+  const to = document.getElementById("routeTo").value;
+  const container = document.getElementById("routeResults");
 
-  results.replaceChildren();
+  container.innerHTML = "";
   showRouteMessage("");
 
   if (!from || !to) {
-    showRouteMessage("กรุณาเลือกต้นทางและปลายทาง");
+    showRouteMessage("กรุณาเลือกทั้งต้นทางและปลายทาง");
     return;
   }
 
   if (from === to) {
-    showRouteMessage("กรุณาเลือกคนละสถานที่");
+    showRouteMessage("ต้นทางและปลายทางต้องเป็นคนละสถานที่");
     return;
   }
 
-  const matches = appData.routes.filter(route =>
+  const matches = data.routes.filter(route =>
     route.from === from && route.to === to
   );
 
   if (!matches.length) {
     showRouteMessage(
-      `ยังไม่มีวิดีโอจาก ${placeName(from)} ไป ${placeName(to)} คุณสามารถเพิ่มวิดีโอในส่วนจัดการข้อมูลด้านล่าง`
+      `ยังไม่มีวิดีโอเส้นทางจาก "${getPlaceName(from)}" ไป "${getPlaceName(to)}" กรุณาลองเลือกเส้นทางอื่น`
     );
     return;
   }
 
-  showRouteMessage(`พบวิดีโอ ${matches.length} รายการ`);
+  showRouteMessage(`พบวิดีโอแนะนำเส้นทาง ${matches.length} รายการ`);
 
-  results.innerHTML = matches.map(route => {
-    const id = youtubeId(route.url);
+  container.innerHTML = matches.map(route => {
+    const videoId = getSafeYouTubeId(route.url);
 
     return `
-      <article class="card">
-        <h3>${safeText(route.title)}</h3>
-        <p>${safeText(placeName(route.from))} → ${safeText(placeName(route.to))}</p>
+      <article class="route-card">
+        <h3>${escapeHTML(route.title)}</h3>
+        <div class="route-points">
+          <span class="point-tag">${escapeHTML(getPlaceName(route.from))}</span>
+          <span aria-hidden="true">→</span>
+          <span class="point-tag">${escapeHTML(getPlaceName(route.to))}</span>
+        </div>
         ${
-          id
-            ? `<iframe class="video"
-                src="https://www.youtube-nocookie.com/embed/${id}"
-                title="${safeText(route.title)}"
-                loading="lazy"
-                allowfullscreen></iframe>`
-            : "<p>ลิงก์ YouTube ไม่ถูกต้อง</p>"
+          videoId
+            ? `<div class="video-frame">
+                 <iframe
+                   src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}"
+                   title="${escapeHTML(route.title)}"
+                   loading="lazy"
+                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                   referrerpolicy="strict-origin-when-cross-origin"
+                   allowfullscreen>
+                 </iframe>
+               </div>`
+            : '<p class="muted">ลิงก์วิดีโอไม่ถูกต้อง</p>'
         }
-        <a class="video-link" href="${safeText(route.url)}"
-          target="_blank" rel="noopener noreferrer">เปิดบน YouTube ↗</a>
+        <a class="video-link"
+          href="${escapeHTML(route.url)}"
+          target="_blank"
+          rel="noopener noreferrer">เปิดวิดีโอบน YouTube ↗</a>
       </article>
     `;
   }).join("");
 }
 
-/* เพิ่มสถานที่ */
-byId("placeForm").addEventListener("submit", event => {
+/* เพิ่มสถานที่ใหม่ */
+document.getElementById("placeForm").addEventListener("submit", event => {
   event.preventDefault();
 
-  const name = byId("placeName").value.trim();
-  const category = byId("placeCategory").value;
-  const description = byId("placeDescription").value.trim();
+  const name = document.getElementById("placeName").value.trim();
+  const category = document.getElementById("placeCategory").value;
+  const description = document.getElementById("placeDescription").value.trim();
 
-  if (!name) return;
-
-  if (appData.places.some(place => place.name.toLowerCase() === name.toLowerCase())) {
-    showAdminMessage("มีสถานที่ชื่อนี้อยู่แล้ว");
+  if (!name) {
+    showAdminMessage("กรุณากรอกชื่อสถานที่");
     return;
   }
 
-  appData.places.push({
-    id: "place-" + Date.now(),
+  const duplicate = data.places.some(
+    place => place.name.toLowerCase() === name.toLowerCase()
+  );
+
+  if (duplicate) {
+    showAdminMessage("มีชื่อสถานที่นี้อยู่แล้ว");
+    return;
+  }
+
+  data.places.push({
+    id: makeId("place"),
     name,
     category,
     description
@@ -297,37 +278,37 @@ byId("placeForm").addEventListener("submit", event => {
   if (!saveData()) return;
 
   event.target.reset();
-  refreshSelects();
+  refreshPlaceSelects();
   renderPlaces();
-  showAdminMessage("เพิ่มสถานที่แล้ว");
+  showAdminMessage("เพิ่มสถานที่เรียบร้อยแล้ว");
 });
 
-/* เพิ่มวิดีโอเส้นทาง */
-byId("routeForm").addEventListener("submit", event => {
+/* เพิ่มวิดีโอโดยผูกกับต้นทางและปลายทาง */
+document.getElementById("routeForm").addEventListener("submit", event => {
   event.preventDefault();
 
-  const from = byId("adminRouteFrom").value;
-  const to = byId("adminRouteTo").value;
-  const title = byId("videoTitle").value.trim();
-  const url = byId("videoUrl").value.trim();
+  const from = document.getElementById("adminRouteFrom").value;
+  const to = document.getElementById("adminRouteTo").value;
+  const title = document.getElementById("videoTitle").value.trim();
+  const url = document.getElementById("videoUrl").value.trim();
 
   if (!from || !to) {
-    showAdminMessage("กรุณาเลือกต้นทางและปลายทาง");
+    showAdminMessage("กรุณาเลือกต้นทางและปลายทางของวิดีโอ");
     return;
   }
 
   if (from === to) {
-    showAdminMessage("ต้นทางและปลายทางต้องต่างกัน");
+    showAdminMessage("ต้นทางและปลายทางต้องเป็นคนละสถานที่");
     return;
   }
 
-  if (!youtubeId(url)) {
-    showAdminMessage("กรุณาใช้ลิงก์วิดีโอ YouTube ที่ถูกต้อง");
+  if (!getSafeYouTubeId(url)) {
+    showAdminMessage("กรุณาใส่ลิงก์ YouTube ที่ถูกต้อง");
     return;
   }
 
-  appData.routes.push({
-    id: "route-" + Date.now(),
+  data.routes.push({
+    id: makeId("route"),
     from,
     to,
     title,
@@ -337,67 +318,68 @@ byId("routeForm").addEventListener("submit", event => {
   if (!saveData()) return;
 
   event.target.reset();
-  showAdminMessage("เพิ่มวิดีโอเส้นทางเรียบร้อยแล้ว");
+  showAdminMessage(
+    `เพิ่มวิดีโอเส้นทาง ${getPlaceName(from)} → ${getPlaceName(to)} แล้ว`
+  );
 });
 
-byId("searchRoute").addEventListener("click", searchRoute);
+/* ปุ่มค้นหาเส้นทาง */
+document.getElementById("searchRoute").addEventListener("click", searchRoute);
 
-byId("swapRoute").addEventListener("click", () => {
-  const from = byId("routeFrom");
-  const to = byId("routeTo");
-  const oldFrom = from.value;
-  const oldTo = to.value;
+document.getElementById("swapRoute").addEventListener("click", () => {
+  const fromSelect = document.getElementById("routeFrom");
+  const toSelect = document.getElementById("routeTo");
 
-  from.value = oldTo;
-  to.value = oldFrom;
+  const oldFrom = fromSelect.value;
+  const oldTo = toSelect.value;
 
-  byId("routeResults").replaceChildren();
+  fromSelect.value = oldTo;
+  toSelect.value = oldFrom;
+
   showRouteMessage("");
+  document.getElementById("routeResults").innerHTML = "";
 });
 
-byId("placeSearch").addEventListener("input", renderPlaces);
+/* ค้นหาสถานที่แบบทันที */
+document.getElementById("placeSearch").addEventListener("input", renderPlaces);
 
-byId("placeList").addEventListener("click", event => {
-  const button = event.target.closest("[data-select-destination]");
+/* เลือกสถานที่จากการ์ดให้เป็นปลายทาง */
+document.getElementById("placeList").addEventListener("click", event => {
+  const button = event.target.closest("[data-destination]");
   if (!button) return;
 
-  byId("routeTo").value = button.dataset.selectDestination;
-  byId("route").scrollIntoView({ behavior: "smooth" });
-  showRouteMessage("เลือกปลายทางแล้ว กรุณาเลือกต้นทาง");
+  document.getElementById("routeTo").value = button.dataset.destination;
+  document.getElementById("route").scrollIntoView({ behavior: "smooth" });
+  showRouteMessage("เลือกปลายทางแล้ว กรุณาเลือกต้นทางและค้นหาเส้นทาง");
 });
 
-/* ส่งออกข้อมูล */
-byId("exportData").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(appData, null, 2)], {
+/* ส่งออกข้อมูลเป็นไฟล์ JSON */
+document.getElementById("exportData").addEventListener("click", () => {
+  const file = new Blob([JSON.stringify(data, null, 2)], {
     type: "application/json"
   });
 
-  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(file);
   const link = document.createElement("a");
   link.href = url;
   link.download = "tu-rangsit-map-data.json";
   link.click();
   URL.revokeObjectURL(url);
+
+  showAdminMessage("ส่งออกข้อมูลแล้ว");
 });
 
-/* นำเข้าข้อมูล */
-byId("importFile").addEventListener("change", async event => {
+/* นำเข้าข้อมูล JSON */
+document.getElementById("importFile").addEventListener("change", async event => {
   const file = event.target.files[0];
   if (!file) return;
 
   try {
     const imported = JSON.parse(await file.text());
 
-    if (
-      !imported ||
-      !Array.isArray(imported.places) ||
-      imported.places.length === 0 ||
-      !Array.isArray(imported.routes)
-    ) {
-      throw new Error("ไฟล์ต้องมีรายการ places และ routes");
+    if (!Array.isArray(imported.places) || !Array.isArray(imported.routes)) {
+      throw new Error("รูปแบบข้อมูลไม่ถูกต้อง");
     }
-
-    const ids = new Set(imported.places.map(place => place.id));
 
     const validPlaces = imported.places.every(place =>
       place &&
@@ -408,63 +390,72 @@ byId("importFile").addEventListener("change", async event => {
 
     const validRoutes = imported.routes.every(route =>
       route &&
+      typeof route.id === "string" &&
       typeof route.from === "string" &&
       typeof route.to === "string" &&
       typeof route.title === "string" &&
-      typeof route.url === "string" &&
-      ids.has(route.from) &&
-      ids.has(route.to) &&
-      youtubeId(route.url)
+      typeof route.url === "string"
     );
 
     if (!validPlaces || !validRoutes) {
-      throw new Error("ข้อมูลสถานที่หรือวิดีโอไม่ถูกต้อง");
+      throw new Error("ข้อมูลสถานที่หรือเส้นทางไม่ครบถ้วน");
     }
 
-    const oldData = appData;
-    appData = imported;
+    const placeIds = new Set(imported.places.map(place => place.id));
+
+    const validRouteReferences = imported.routes.every(route =>
+      placeIds.has(route.from) &&
+      placeIds.has(route.to) &&
+      Boolean(getSafeYouTubeId(route.url))
+    );
+
+    if (!validRouteReferences) {
+      throw new Error("มีเส้นทางที่อ้างถึงสถานที่ที่ไม่มีอยู่ หรือมีลิงก์วิดีโอไม่ถูกต้อง");
+    }
+
+    const previousData = data;
+    data = imported;
 
     if (!saveData()) {
-      appData = oldData;
+      data = previousData;
       return;
     }
 
-    refreshSelects();
+    refreshPlaceSelects();
     renderPlaces();
+    document.getElementById("routeResults").innerHTML = "";
     showAdminMessage("นำเข้าข้อมูลเรียบร้อยแล้ว");
   } catch (error) {
-    showAdminMessage("นำเข้าไม่สำเร็จ: " + error.message);
+    showAdminMessage("นำเข้าข้อมูลไม่สำเร็จ: " + error.message);
+  } finally {
+    event.target.value = "";
   }
-
-  event.target.value = "";
 });
 
-/* คืนค่ารายชื่อสถานที่ตัวอย่าง */
-byId("resetData").addEventListener("click", () => {
-  if (!confirm("คืนค่าข้อมูลตัวอย่างใช่หรือไม่? ข้อมูลที่เพิ่มไว้จะถูกแทนที่")) {
-    return;
-  }
+/* คืนค่าข้อมูลตัวอย่าง */
+document.getElementById("resetData").addEventListener("click", () => {
+  const confirmed = window.confirm(
+    "ต้องการคืนค่าข้อมูลตัวอย่างหรือไม่? สถานที่และวิดีโอที่เพิ่มไว้ในเบราว์เซอร์นี้จะถูกแทนที่"
+  );
 
-  appData = copySampleData();
+  if (!confirmed) return;
+
+  data = JSON.parse(JSON.stringify(initialData));
 
   if (!saveData()) return;
 
-  refreshSelects();
+  refreshPlaceSelects();
   renderPlaces();
-  byId("routeResults").replaceChildren();
+  document.getElementById("routeResults").innerHTML = "";
   showRouteMessage("");
   showAdminMessage("คืนค่าข้อมูลตัวอย่างแล้ว");
 });
 
-/* เริ่มต้นหลังจาก HTML โหลดครบ */
-function initializeApp() {
-  refreshSelects();
+/* เริ่มต้นเว็บไซต์ */
+function initializeWebsite() {
+  refreshPlaceSelects();
   renderPlaces();
-
-  console.log("TU Rangsit Map พร้อมใช้งาน");
-  console.log("จำนวนสถานที่:", appData.places.length);
-  console.log("จำนวนวิดีโอ:", appData.routes.length);
 }
 
-initializeApp();
+initializeWebsite();
 
