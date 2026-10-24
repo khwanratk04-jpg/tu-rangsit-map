@@ -3,31 +3,41 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TU Rangsit Map</title>
-  <link rel="stylesheet" href="./style.css">
-  <script src="./script.js" defer></script>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <header class="header">
-    <a href="#" class="logo">TU <span>Rangsit Map</span></a>
-    <a href="#route">ค้นหาเส้นทาง</a>
+  <header class="topbar">
+    <a class="brand" href="#">
+      <span class="brand-mark">TU</span>
+      <span>
+        <strong>TU Rangsit Map</strong>
+        <small>แผนที่นำทาง มหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</small>
+      </span>
+    </a>
+    <a class="nav-link" href="#route">ค้นหาเส้นทาง</a>
   </header>
 
   <main>
     <section class="hero">
       <p class="eyebrow">THAMMASAT UNIVERSITY · RANGSIT</p>
       <h1>ไปที่ไหน<br><span>ก็หาทางเจอ</span></h1>
-      <p>ค้นหาสถานที่และวิดีโอแนะนำเส้นทางภายในมหาวิทยาลัย</p>
-      <a href="#route" class="button gold">เริ่มต้นใช้งาน</a>
+      <p>ค้นหาสถานที่และดูวิดีโอแนะนำเส้นทางภายในมหาวิทยาลัย</p>
+      <a class="primary-button" href="#route">เริ่มค้นหาเส้นทาง</a>
     </section>
 
     <section class="section" id="route">
-      <p class="eyebrow">DIRECTION FINDER</p>
-      <h2>ค้นหาเส้นทาง</h2>
-      <p class="muted">เลือกต้นทางและปลายทางเพื่อค้นหาวิดีโอแนะนำทาง</p>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">DIRECTION FINDER</p>
+          <h2>ค้นหาเส้นทาง</h2>
+          <p class="muted">เลือกจุดเริ่มต้นและสถานที่ที่ต้องการไป</p>
+        </div>
+      </div>
 
-      <div class="route-box">
+      <div class="route-panel">
         <div class="field">
           <label for="routeFrom">ต้นทาง</label>
           <select id="routeFrom">
@@ -35,7 +45,8 @@
           </select>
         </div>
 
-        <button id="swapRoute" class="swap" type="button" aria-label="สลับต้นทางปลายทาง">⇅</button>
+        <button id="swapRoute" class="swap-button" type="button"
+          aria-label="สลับต้นทางและปลายทาง" title="สลับต้นทางและปลายทาง">⇅</button>
 
         <div class="field">
           <label for="routeTo">ปลายทาง</label>
@@ -44,66 +55,85 @@
           </select>
         </div>
 
-        <button id="searchRoute" class="button" type="button">ค้นหาเส้นทาง</button>
+        <button id="searchRoute" class="primary-button" type="button">
+          ค้นหาเส้นทาง
+        </button>
       </div>
 
-      <p id="routeMessage" class="message" aria-live="polite"></p>
-      <div id="routeResults" class="cards"></div>
+      <div id="routeMessage" class="message" aria-live="polite"></div>
+      <div id="routeResults" class="route-results"></div>
     </section>
 
     <section class="section" id="places">
-      <p class="eyebrow">CAMPUS DIRECTORY</p>
-      <h2>สถานที่ในมหาวิทยาลัย</h2>
-      <input id="placeSearch" class="search" type="search" placeholder="ค้นหาชื่อสถานที่...">
-      <div id="placeList" class="cards"></div>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">EXPLORE CAMPUS</p>
+          <h2>สถานที่ในมหาวิทยาลัย</h2>
+          <p class="muted">เลือกดูสถานที่ หรือค้นหาจากชื่อ</p>
+        </div>
+      </div>
+
+      <div class="search-box">
+        <span>⌕</span>
+        <input id="placeSearch" type="search"
+          placeholder="ค้นหาชื่อสถานที่ เช่น ยิม 4-5 หรือ SC123">
+      </div>
+
+      <div id="placeList" class="place-grid"></div>
     </section>
 
-    <section class="section" id="manage">
-      <p class="eyebrow">MANAGE CONTENT</p>
-      <h2>จัดการข้อมูลเว็บไซต์</h2>
-      <p class="muted">ข้อมูลที่เพิ่มจะเก็บในเบราว์เซอร์ที่ใช้งานอยู่</p>
+    <section class="section admin-section" id="admin">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">WEBSITE MANAGEMENT</p>
+          <h2>จัดการข้อมูลเว็บไซต์</h2>
+          <p class="muted">เพิ่มสถานที่และวิดีโอเส้นทางสำหรับเครื่องที่ใช้งานอยู่</p>
+        </div>
+      </div>
 
-      <div class="manage-grid">
-        <form id="placeForm" class="panel">
+      <div class="admin-grid">
+        <form id="placeForm" class="admin-card">
           <h3>เพิ่มสถานที่</h3>
 
           <div class="field">
             <label for="placeName">ชื่อสถานที่</label>
-            <input id="placeName" required placeholder="ชื่อสถานที่">
+            <input id="placeName" required maxlength="100"
+              placeholder="เช่น อาคารเรียนรวม SC123">
           </div>
 
           <div class="field">
-            <label for="placeCategory">ประเภท</label>
-            <select id="placeCategory">
-              <option>อาคารเรียน</option>
-              <option>กีฬา</option>
-              <option>หอพัก</option>
-              <option>พื้นที่ส่วนกลาง</option>
-              <option>บริการ</option>
-              <option>อื่น ๆ</option>
+            <label for="placeCategory">ประเภทสถานที่</label>
+            <select id="placeCategory" required>
+              <option value="อาคารเรียน">อาคารเรียน</option>
+              <option value="กีฬา">กีฬา</option>
+              <option value="หอพัก">หอพัก</option>
+              <option value="พื้นที่ส่วนกลาง">พื้นที่ส่วนกลาง</option>
+              <option value="บริการ">บริการ</option>
+              <option value="อื่น ๆ">อื่น ๆ</option>
             </select>
           </div>
 
           <div class="field">
             <label for="placeDescription">รายละเอียด</label>
-            <textarea id="placeDescription" rows="3" placeholder="รายละเอียดเพิ่มเติม"></textarea>
+            <textarea id="placeDescription" rows="3"
+              placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea>
           </div>
 
-          <button class="button" type="submit">เพิ่มสถานที่</button>
+          <button class="primary-button" type="submit">+ เพิ่มสถานที่</button>
         </form>
 
-        <form id="routeForm" class="panel">
-          <h3>เพิ่มวิดีโอเส้นทาง</h3>
+        <form id="routeForm" class="admin-card">
+          <h3>เพิ่มวิดีโอแนะนำเส้นทาง</h3>
 
           <div class="field">
-            <label for="adminRouteFrom">ต้นทาง</label>
+            <label for="adminRouteFrom">ต้นทางของวิดีโอ</label>
             <select id="adminRouteFrom" required>
               <option value="">เลือกต้นทาง</option>
             </select>
           </div>
 
           <div class="field">
-            <label for="adminRouteTo">ปลายทาง</label>
+            <label for="adminRouteTo">ปลายทางของวิดีโอ</label>
             <select id="adminRouteTo" required>
               <option value="">เลือกปลายทาง</option>
             </select>
@@ -111,32 +141,45 @@
 
           <div class="field">
             <label for="videoTitle">ชื่อวิดีโอ</label>
-            <input id="videoTitle" required placeholder="ชื่อคลิป">
+            <input id="videoTitle" required maxlength="150"
+              placeholder="เช่น จากหอในไปอาคารเรียน">
           </div>
 
           <div class="field">
             <label for="videoUrl">ลิงก์ YouTube</label>
-            <input id="videoUrl" type="url" required placeholder="https://www.youtube.com/watch?v=...">
+            <input id="videoUrl" type="url" required
+              placeholder="https://www.youtube.com/watch?v=...">
           </div>
 
-          <button class="button" type="submit">เพิ่มวิดีโอ</button>
+          <button class="primary-button" type="submit">+ เพิ่มวิดีโอ</button>
         </form>
       </div>
 
-      <p id="adminMessage" class="message" aria-live="polite"></p>
-
-      <div class="manage-actions">
-        <button id="exportData" class="button secondary" type="button">ส่งออกข้อมูล</button>
-        <label class="button secondary file-button" for="importFile">นำเข้าข้อมูล</label>
+      <div class="admin-actions">
+        <button id="exportData" class="secondary-button" type="button">
+          ส่งออกข้อมูล JSON
+        </button>
+        <label class="secondary-button file-label" for="importFile">
+          นำเข้าข้อมูล JSON
+        </label>
         <input id="importFile" type="file" accept=".json,application/json" hidden>
-        <button id="resetData" class="button danger" type="button">คืนค่าข้อมูลตัวอย่าง</button>
+        <button id="resetData" class="danger-button" type="button">
+          คืนค่าข้อมูลตัวอย่าง
+        </button>
       </div>
+
+      <p id="adminMessage" class="message" aria-live="polite"></p>
+      <p class="notice">
+        หมายเหตุ: ข้อมูลจะบันทึกในเบราว์เซอร์เครื่องนี้ ยังไม่มีระบบสมาชิกหรือฐานข้อมูลออนไลน์
+        หากเผยแพร่เว็บ คนอื่นจะไม่เห็นข้อมูลที่เพิ่มจากเครื่องของคุณโดยอัตโนมัติ
+      </p>
     </section>
   </main>
 
   <footer>
     <strong>TU Rangsit Map</strong>
-    <p>ต้นแบบเว็บไซต์ค้นหาสถานที่ภายในมหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</p>
+    <p>เว็บไซต์ต้นแบบเพื่อช่วยค้นหาสถานที่และเส้นทางภายในมหาวิทยาลัย</p>
   </footer>
 </body>
 </html>
+
