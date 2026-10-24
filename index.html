@@ -1,1 +1,275 @@
 
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TU Rangsit Map | ค้นหาสถานที่ในธรรมศาสตร์</title>
+<style>
+:root{--navy:#142d4e;--blue:#2463a6;--gold:#f0bd55;--bg:#f4f7fb;--muted:#66758a}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,"Noto Sans Thai",sans-serif;background:var(--bg);color:#1d2939}
+header{background:var(--navy);color:white;padding:22px max(5%,calc((100% - 1100px)/2))}
+.brand{font-size:25px;font-weight:800}.brand span{color:var(--gold)}
+header p{margin:7px 0 0;color:#dce7f4}
+main{max-width:1100px;margin:auto;padding:24px 18px 50px}
+.hero{background:linear-gradient(125deg,#18395f,#2e6596);color:white;border-radius:20px;padding:30px;margin-bottom:22px}
+.hero h1{font-size:clamp(25px,4vw,38px);margin:0 0 10px}.hero p{line-height:1.8;color:#e5edf7}
+.search{display:flex;gap:9px;flex-wrap:wrap}
+input,select,textarea{font:inherit;padding:12px;border:1px solid #d3dce7;border-radius:10px;background:white;width:100%;color:#182433}
+.search input{flex:1;min-width:180px;border:0}
+button{font:inherit;border:0;border-radius:10px;padding:11px 16px;background:var(--blue);color:white;cursor:pointer}
+button:hover{filter:brightness(1.08)}button.secondary{background:#e6edf6;color:var(--navy)}
+button.gold{background:var(--gold);color:#252525}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.filters button{border:1px solid #d9e2ed;background:white;color:var(--navy)}
+.filters button.active{background:var(--navy);color:white}
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.card{background:white;border:1px solid #e4eaf1;border-radius:16px;overflow:hidden;box-shadow:0 3px 12px #18395f08}
+.card-art{height:110px;background:linear-gradient(130deg,#dbe9f6,#f6e8c7);display:grid;place-items:center;font-size:42px}
+.card-content{padding:17px}.card h3{margin:0 0 8px;font-size:19px}
+.muted{color:var(--muted);font-size:14px;line-height:1.7}
+.tag{display:inline-block;background:#edf3fa;color:#244c79;padding:4px 9px;border-radius:20px;font-size:12px;margin-bottom:10px}
+.card-actions{display:flex;gap:8px;margin-top:15px}.card-actions button{flex:1;padding:10px 8px;font-size:14px}
+.panel{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:20px;margin-top:25px}
+.panel h2{margin-top:0}.field{margin:12px 0}.field label{display:block;font-size:14px;margin-bottom:6px}
+.stars{font-size:27px;color:#e5a522;cursor:pointer;letter-spacing:3px}
+.review{padding:13px 0;border-bottom:1px solid #edf0f4}.review:last-child{border:0}
+footer{text-align:center;padding:25px;color:var(--muted);font-size:13px}
+dialog{border:0;border-radius:18px;padding:0;width:min(600px,92vw);max-height:88vh;overflow:auto;box-shadow:0 20px 80px #0004}
+dialog::backdrop{background:#10233b99}.modal-inner{padding:23px}
+.modal-inner h2{margin-top:0}.close{float:right}
+.admin-box{display:none}.notice{padding:12px;border-radius:10px;background:#fff5dc;color:#684b0b;font-size:13px;line-height:1.7}
+a{color:var(--blue);overflow-wrap:anywhere}
+iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px}
+@media(max-width:520px){.hero{padding:22px}.card-actions{flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">TU <span>RANGSIT MAP</span></div>
+  <p>ค้นหาสถานที่ • สำรวจเส้นทาง • เดินทางในมหาวิทยาลัยได้ง่ายขึ้น</p>
+</header>
+
+<main>
+<section class="hero">
+  <span class="tag">THAMMASAT UNIVERSITY · RANGSIT</span>
+  <h1>ไปที่ไหนในธรรมศาสตร์<br>ให้แผนที่ช่วยคุณ</h1>
+  <p>ค้นหาอาคารและสถานที่สำคัญ พร้อมดูข้อมูลและเส้นทางประกอบก่อนออกเดินทาง</p>
+  <div class="search">
+    <input id="search" placeholder="ลองค้นหา เช่น SC123, หอใน, สระว่ายน้ำ" aria-label="ค้นหาสถานที่">
+    <button class="gold" onclick="renderPlaces()">ค้นหาสถานที่</button>
+  </div>
+</section>
+
+<div class="section-title">
+  <h2>สำรวจสถานที่</h2>
+  <span id="count" class="muted"></span>
+</div>
+<div class="filters" id="filters">
+  <button class="active" data-category="ทั้งหมด">ทั้งหมด</button>
+  <button data-category="การเรียน">อาคารเรียน</button>
+  <button data-category="กีฬา">กีฬาและกิจกรรม</button>
+  <button data-category="ที่พัก">ที่พัก</button>
+  <button data-category="อื่น ๆ">สถานที่อื่น ๆ</button>
+</div>
+<div class="grid" id="places"></div>
+
+<section class="panel" id="reviews">
+  <h2>⭐ รีวิวจากผู้ใช้งาน</h2>
+  <p class="muted">แบ่งปันประสบการณ์เพื่อช่วยให้นักศึกษาคนอื่นเดินทางได้สะดวกขึ้น</p>
+  <div id="reviewSummary" class="muted"></div>
+  <div id="reviewList"></div>
+</section>
+
+<section class="panel">
+  <h2>🛠️ สำหรับผู้ดูแลเว็บไซต์</h2>
+  <p class="muted">เข้าสู่ระบบเพื่อเพิ่มสถานที่และแก้ไขข้อมูลในต้นแบบนี้</p>
+  <button onclick="document.getElementById('adminDialog').showModal()">เข้าสู่ระบบผู้ดูแล</button>
+</section>
+</main>
+
+<footer>
+  TU Rangsit Map · เว็บไซต์ต้นแบบสำหรับช่วยค้นหาสถานที่ภายในมหาวิทยาลัย<br>
+  ข้อมูลบางส่วนเป็นข้อมูลตัวอย่าง โปรดตรวจสอบสถานที่และเส้นทางก่อนเดินทาง
+</footer>
+
+<dialog id="detailDialog"><div class="modal-inner" id="detailContent"></div></dialog>
+<dialog id="adminDialog">
+<div class="modal-inner">
+<button class="secondary close" onclick="document.getElementById('adminDialog').close()">ปิด</button>
+<h2>ผู้ดูแลเว็บไซต์</h2>
+<div id="loginForm">
+<p class="muted">เข้าสู่ระบบเพื่อจัดการข้อมูลในเครื่องนี้</p>
+<div class="field"><label>ชื่อผู้ใช้</label><input id="username" autocomplete="username"></div>
+<div class="field"><label>รหัสผ่าน</label><input id="password" type="password" autocomplete="current-password"></div>
+<button onclick="login()">เข้าสู่ระบบ</button>
+<p id="loginError" class="muted"></p>
+<div class="notice">ข้อมูลเข้าสู่ระบบนี้เป็นเพียงบัญชีสาธิต ห้ามใช้รหัสผ่านจริงหรือข้อมูลสำคัญ เพราะระบบต้นแบบนี้ไม่ได้มีระบบยืนยันตัวตนที่ปลอดภัย</div>
+</div>
+<div id="adminPanel" class="admin-box">
+<h3>เพิ่มสถานที่</h3>
+<div class="field"><label>ชื่อสถานที่</label><input id="newName" placeholder="ชื่ออาคารหรือสถานที่"></div>
+<div class="field"><label>หมวดหมู่</label><select id="newCategory"><option>การเรียน</option><option>กีฬา</option><option>ที่พัก</option><option>อื่น ๆ</option></select></div>
+<div class="field"><label>คำอธิบาย</label><textarea id="newDescription" rows="3" placeholder="รายละเอียดสถานที่"></textarea></div>
+<div class="field"><label>ลิงก์แผนที่ (ถ้ามี)</label><input id="newMap" placeholder="https://maps.google.com/..."></div>
+<div class="field"><label>ลิงก์วิดีโอเส้นทาง (ถ้ามี)</label><input id="newVideo" placeholder="ลิงก์ YouTube"></div>
+<button onclick="addPlace()">เพิ่มสถานที่</button>
+<button class="secondary" onclick="exportData()">ส่งออกข้อมูล JSON</button>
+<button class="secondary" onclick="logout()">ออกจากระบบ</button>
+<div id="adminPlaces"></div>
+</div>
+</div>
+</dialog>
+
+<script>
+const seedPlaces = [
+ {id:1,name:"ยิม 4–5",category:"กีฬา",description:"สถานที่สำหรับกิจกรรมและการกีฬา",icon:"🏟️"},
+ {id:2,name:"คณะสังคมสงเคราะห์ศาสตร์",category:"การเรียน",description:"อาคารคณะและพื้นที่การเรียนรู้",icon:"🏫"},
+ {id:3,name:"สระว่ายน้ำ",category:"กีฬา",description:"สถานที่สำหรับกิจกรรมว่ายน้ำ โปรดตรวจสอบเวลาเปิดใช้บริการ",icon:"🏊"},
+ {id:4,name:"ลานพญานาค",category:"อื่น ๆ",description:"พื้นที่ส่วนกลางและจุดนัดพบ",icon:"🐉"},
+ {id:5,name:"SC123",category:"การเรียน",description:"อาคารที่ใช้ในการเรียนการสอน โปรดตรวจสอบห้องเรียนก่อนเดินทาง",icon:"📚"},
+ {id:6,name:"คณะศึกษาศาสตร์",category:"การเรียน",description:"พื้นที่คณะและการเรียนการสอน",icon:"🎓"},
+ {id:7,name:"ศกร.",category:"การเรียน",description:"สถานที่ตามชื่อที่ผู้ใช้ให้ไว้ โปรดตรวจสอบตำแหน่งที่แน่นอน",icon:"🏢"},
+ {id:8,name:"บร.1",category:"การเรียน",description:"อาคารที่ผู้ใช้ระบุไว้ โปรดตรวจสอบตำแหน่งก่อนเดินทาง",icon:"🏛️"},
+ {id:9,name:"อาคารป๋วย",category:"การเรียน",description:"อาคารป๋วย อึ๊งภากรณ์ โปรดตรวจสอบจุดหมายย่อยก่อนเดินทาง",icon:"🏢"},
+ {id:10,name:"Green",category:"อื่น ๆ",description:"สถานที่ตามชื่อที่ผู้ใช้ให้ไว้ โปรดตรวจสอบตำแหน่งที่แน่นอน",icon:"🌿"},
+ {id:11,name:"หอใน",category:"ที่พัก",description:"กลุ่มที่พักนักศึกษาภายในมหาวิทยาลัย",icon:"🏠"},
+ {id:12,name:"อินเตอร์โซน",category:"อื่น ๆ",description:"พื้นที่บริการและจุดนัดพบ โปรดตรวจสอบจุดหมายย่อย",icon:"🧭"},
+ {id:13,name:"ทิวสน",category:"ที่พัก",description:"สถานที่ตามชื่อที่ผู้ใช้ให้ไว้ โปรดตรวจสอบตำแหน่งที่แน่นอน",icon:"🌲"},
+ {id:14,name:"ถังฟุ่",category:"อื่น ๆ",description:"ชื่อสถานที่ตามรายการตั้งต้น โปรดยืนยันการสะกดและตำแหน่ง",icon:"📍"},
+ {id:15,name:"เชียงรากหนึ่ง",category:"อื่น ๆ",description:"พื้นที่บริเวณเชียงราก โปรดระบุจุดหมายที่แน่นอน",icon:"🧭"},
+ {id:16,name:"คณะวิศวกรรมศาสตร์",category:"การเรียน",description:"อาคารและพื้นที่ของคณะวิศวกรรมศาสตร์",icon:"⚙️"}
+];
+let places = JSON.parse(localStorage.getItem("tuMapPlaces") || "null") || seedPlaces;
+let reviews = JSON.parse(localStorage.getItem("tuMapReviews") || "[]");
+let activeCategory = "ทั้งหมด";
+let selectedRating = 5;
+let activePlace = null;
+let isAdmin = false;
+
+function savePlaces(){localStorage.setItem("tuMapPlaces",JSON.stringify(places))}
+function saveReviews(){localStorage.setItem("tuMapReviews",JSON.stringify(reviews))}
+function escapeHTML(s){return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function average(id){
+ const r=reviews.filter(x=>x.placeId===id);
+ return r.length ? (r.reduce((a,b)=>a+b.rating,0)/r.length).toFixed(1) : "ยังไม่มีคะแนน";
+}
+function renderPlaces(){
+ const q=document.getElementById("search").value.trim().toLowerCase();
+ const filtered=places.filter(p=>(activeCategory==="ทั้งหมด"||p.category===activeCategory)&&
+ (p.name+" "+p.description+" "+p.category).toLowerCase().includes(q));
+ document.getElementById("count").textContent="พบ "+filtered.length+" สถานที่";
+ document.getElementById("places").innerHTML=filtered.map(p=>`
+ <article class="card">
+ <div class="card-art">${p.icon||"📍"}</div>
+ <div class="card-content">
+ <span class="tag">${escapeHTML(p.category)}</span>
+ <h3>${escapeHTML(p.name)}</h3>
+ <p class="muted">${escapeHTML(p.description)}</p>
+ <p class="muted">⭐ ${average(p.id)} ${reviews.filter(r=>r.placeId===p.id).length ? "("+reviews.filter(r=>r.placeId===p.id).length+" รีวิว)" : ""}</p>
+ <div class="card-actions"><button onclick="showDetail(${p.id})">ดูรายละเอียด</button>
+ ${p.map?`<button class="secondary" onclick="openLink('${encodeURIComponent(p.map)}')">ดูแผนที่</button>`:""}
+ </div></div></article>`).join("") || "<p>ไม่พบสถานที่ที่ค้นหา ลองใช้คำอื่นนะคะ</p>";
+ renderReviews();
+ if(isAdmin) renderAdminPlaces();
+}
+function openLink(encoded){const u=decodeURIComponent(encoded);if(/^https?:\/\//i.test(u))window.open(u,"_blank","noopener");}
+function showDetail(id){
+ activePlace=places.find(p=>p.id===id);if(!activePlace)return;
+ const p=activePlace;
+ const safeMap=p.map&&/^https?:\/\//i.test(p.map)?`<p><a href="${escapeHTML(p.map)}" target="_blank" rel="noopener">เปิดแผนที่ในแท็บใหม่ ↗</a></p>`:"<p class='muted'>ยังไม่มีลิงก์แผนที่สำหรับสถานที่นี้</p>";
+ let video="";
+ if(p.video&&/^https?:\/\//i.test(p.video)){
+  let embed=p.video.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+  video=embed?`<h3>วิดีโอแนะนำเส้นทาง</h3><iframe src="https://www.youtube-nocookie.com/embed/${embed[1]}" allowfullscreen title="วิดีโอแนะนำเส้นทาง"></iframe>`:`<p><a href="${escapeHTML(p.video)}" target="_blank" rel="noopener">เปิดวิดีโอแนะนำเส้นทาง ↗</a></p>`;
+ }
+ document.getElementById("detailContent").innerHTML=`
+ <button class="secondary close" onclick="document.getElementById('detailDialog').close()">ปิด</button>
+ <div class="card-art">${p.icon||"📍"}</div><span class="tag">${escapeHTML(p.category)}</span>
+ <h2>${escapeHTML(p.name)}</h2><p>${escapeHTML(p.description)}</p>${safeMap}${video}
+ <hr><h3>ให้คะแนนสถานที่นี้</h3><p class="muted">คะแนนเฉลี่ย: ⭐ ${average(p.id)}</p>
+ <div class="stars" id="ratingStars">${[1,2,3,4,5].map(n=>`<span onclick="setRating(${n})" data-star="${n}">${n<=selectedRating?"★":"☆"}</span>`).join("")}</div>
+ <div class="field"><label>ความคิดเห็น (ไม่บังคับ)</label><textarea id="reviewText" rows="3" maxlength="500" placeholder="แชร์ประสบการณ์หรือข้อเสนอแนะ"></textarea></div>
+ <button onclick="submitReview()">ส่งรีวิว</button>
+ <div id="detailReviews"></div>`;
+ document.getElementById("detailDialog").showModal();
+ renderDetailReviews();
+}
+function setRating(n){selectedRating=n;document.querySelectorAll("#ratingStars span").forEach(el=>el.textContent=Number(el.dataset.star)<=n?"★":"☆")}
+function submitReview(){
+ if(!activePlace)return;
+ const text=document.getElementById("reviewText").value.trim();
+ reviews.unshift({placeId:activePlace.id,rating:selectedRating,text,date:new Date().toLocaleDateString("th-TH")});
+ saveReviews();renderPlaces();renderDetailReviews();
+ document.getElementById("reviewText").value="";
+ alert("บันทึกรีวิวในเบราว์เซอร์นี้แล้ว");
+}
+function renderDetailReviews(){
+ if(!activePlace)return;
+ const rs=reviews.filter(r=>r.placeId===activePlace.id).slice(0,5);
+ const el=document.getElementById("detailReviews");if(!el)return;
+ el.innerHTML="<h3>รีวิวล่าสุด</h3>"+(rs.map(r=>`<div class="review"><strong>${"★".repeat(r.rating)}${"☆".repeat(5-r.rating)}</strong><p>${escapeHTML(r.text||"ไม่ได้เขียนความคิดเห็น")}</p><small class="muted">${escapeHTML(r.date)}</small></div>`).join("")||"<p class='muted'>ยังไม่มีรีวิว</p>");
+}
+function renderReviews(){
+ const rs=reviews.slice(0,5);
+ document.getElementById("reviewSummary").textContent=reviews.length?`มีรีวิวทั้งหมด ${reviews.length} รายการ`:"ยังไม่มีรีวิว ลองเป็นคนแรกที่แบ่งปันประสบการณ์";
+ document.getElementById("reviewList").innerHTML=rs.map(r=>{
+ const p=places.find(x=>x.id===r.placeId);
+ return `<div class="review"><strong>${escapeHTML(p?p.name:"สถานที่")}</strong> · <span style="color:#d99a18">${"★".repeat(r.rating)}${"☆".repeat(5-r.rating)}</span><p>${escapeHTML(r.text||"ไม่ได้เขียนความคิดเห็น")}</p><small class="muted">${escapeHTML(r.date)}</small></div>`;
+ }).join("");
+}
+document.getElementById("filters").addEventListener("click",e=>{
+ const b=e.target.closest("button[data-category]");if(!b)return;
+ activeCategory=b.dataset.category;
+ document.querySelectorAll("#filters button").forEach(x=>x.classList.toggle("active",x===b));
+ renderPlaces();
+});
+document.getElementById("search").addEventListener("input",renderPlaces);
+
+function login(){
+ // บัญชีสาธิตเท่านั้น ห้ามใช้เป็นระบบจริง
+ if(document.getElementById("username").value==="admin"&&document.getElementById("password").value==="tu-demo-2026"){
+  isAdmin=true;document.getElementById("loginForm").style.display="none";
+  document.getElementById("adminPanel").style.display="block";renderAdminPlaces();
+ }else document.getElementById("loginError").textContent="ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
+}
+function logout(){isAdmin=false;document.getElementById("loginForm").style.display="block";document.getElementById("adminPanel").style.display="none";document.getElementById("password").value=""}
+function addPlace(){
+ if(!isAdmin)return;
+ const name=document.getElementById("newName").value.trim();
+ if(!name){alert("กรุณากรอกชื่อสถานที่");return}
+ const map=document.getElementById("newMap").value.trim();
+ const video=document.getElementById("newVideo").value.trim();
+ if((map&&!/^https?:\/\//i.test(map))||(video&&!/^https?:\/\//i.test(video))){alert("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");return}
+ places.push({id:Date.now(),name,category:document.getElementById("newCategory").value,description:document.getElementById("newDescription").value.trim()||"ยังไม่มีรายละเอียด",map,video,icon:"📍"});
+ savePlaces();["newName","newDescription","newMap","newVideo"].forEach(id=>document.getElementById(id).value="");renderPlaces();alert("เพิ่มสถานที่แล้ว");
+}
+function renderAdminPlaces(){
+ const el=document.getElementById("adminPlaces");if(!el)return;
+ el.innerHTML="<h3>จัดการสถานที่</h3>"+places.map(p=>`<div class="review"><strong>${escapeHTML(p.name)}</strong><p class="muted">${escapeHTML(p.category)}</p><button class="secondary" onclick="editPlace(${p.id})">แก้ไข</button> <button style="background:#a83232" onclick="deletePlace(${p.id})">ลบ</button></div>`).join("");
+}
+function editPlace(id){
+ if(!isAdmin)return;const p=places.find(x=>x.id===id);if(!p)return;
+ const name=prompt("ชื่อสถานที่",p.name);if(name===null)return;
+ const description=prompt("คำอธิบาย",p.description);if(description===null)return;
+ const map=prompt("ลิงก์แผนที่ (เว้นว่างหากไม่มี)",p.map||"");if(map===null)return;
+ const video=prompt("ลิงก์วิดีโอเส้นทาง (เว้นว่างหากไม่มี)",p.video||"");if(video===null)return;
+ if((map&&!/^https?:\/\//i.test(map))||(video&&!/^https?:\/\//i.test(video))){alert("ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://");return}
+ p.name=name.trim()||p.name;p.description=description.trim();p.map=map.trim();p.video=video.trim();savePlaces();renderPlaces();
+}
+function deletePlace(id){
+ if(!isAdmin||!confirm("ต้องการลบสถานที่นี้หรือไม่?"))return;
+ places=places.filter(p=>p.id!==id);savePlaces();renderPlaces();
+}
+function exportData(){
+ if(!isAdmin)return;
+ const blob=new Blob([JSON.stringify({places,reviews},null,2)],{type:"application/json"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tu-rangsit-map-data.json";a.click();URL.revokeObjectURL(a.href);
+}
+renderPlaces();
+</script>
+</body>
+</html>
+
