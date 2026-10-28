@@ -830,3 +830,115 @@ footer p {
     flex-direction: column;
   }
 }
+
+/* =========================================
+   ระบบรีวิวเส้นทาง
+   ใช้สีเดิมของ TU Rangsit Map
+========================================= */
+
+.review-section {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.review-section h4 {
+  margin: 0 0 12px;
+  color: var(--maroon);
+}
+
+.review-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 18px;
+}
+
+.review-summary strong {
+  font-size: 25px;
+  color: var(--maroon);
+}
+
+.review-stars {
+  color: #c99b35;
+  letter-spacing: 2px;
+}
+
+.review-count {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.review-form {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.review-form label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.review-form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  resize: vertical;
+}
+
+.review-star-picker {
+  display: flex;
+  gap: 5px;
+}
+
+.review-star-button {
+  padding: 0 3px;
+  border: 0;
+  background: transparent;
+  color: #b9b0b2;
+  font-size: 30px;
+  line-height: 1.4;
+}
+
+.review-star-button:hover,
+.review-star-button.selected {
+  color: #c99b35;
+}
+
+.review-list {
+  margin-top: 16px;
+}
+
+.review-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.review-item-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.review-item-heading small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.review-item p {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
