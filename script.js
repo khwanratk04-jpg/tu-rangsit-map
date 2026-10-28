@@ -434,17 +434,16 @@ document.getElementById("findRoute").addEventListener("click", () => {
                 web-share"
               allowfullscreen></iframe>`
           : ""}
-        <p>
+                <p>
           <a class="button button-primary" target="_blank"
             rel="noopener noreferrer"
             href="${escapeHTML(route.videoUrl)}">
             เปิดวิดีโอ
           </a>
         </p>
+
+        ${renderRouteReviews(route)}
       </article>
-    `;
-  }).join("");
-});
 
 /* =========================================
    6. ระบบเปิด-ปิดหน้าต่างและเข้าสู่ระบบ
