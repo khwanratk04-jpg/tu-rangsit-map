@@ -344,3 +344,151 @@ document.addEventListener("submit", event => {
     document.getElementById("findRoute").click();
   }
 });
+
+/* =========================================
+   ระบบค้นหาสถานที่ TU Rangsit Map
+========================================= */
+
+(function () {
+  "use strict";
+
+  const searchInput = document.getElementById("searchInput");
+  const clearSearch = document.getElementById("clearSearch");
+  const placeGrid = document.getElementById("placeGrid");
+  const placeCount = document.getElementById("placeCount");
+  const emptyState = document.getElementById("emptyState");
+  const categoryFilters = document.getElementById("categoryFilters");
+
+  if (!searchInput || !placeGrid) {
+    console.error("ไม่พบช่องค้นหาหรือพื้นที่แสดงรายการสถานที่");
+    return;
+  }
+
+  let currentCategory = "ทั้งหมด";
+
+  function normalize(value) {
+    return String(value || "")
+      .normalize("NFC")
+      .toLocaleLowerCase("th")
+      .trim();
+  }
+
+  function searchPlaces() {
+    const keyword = normalize(searchInput.value);
+    const places = Array.isArray(data.places) ? data.places : [];
+
+    const results = places.filter(function (place) {
+      const text = normalize([
+        place.name,
+        place.category,
+        place.description
+      ].join(" "));
+
+      const matchesKeyword = text.includes(keyword);
+      const matchesCategory =
+        currentCategory === "ทั้งหมด" ||
+        place.category === currentCategory;
+
+      return matchesKeyword && matchesCategory;
+    });
+
+    placeGrid.innerHTML = "";
+
+    if (placeCount) {
+      placeCount.textContent = results.length + " สถานที่";
+    }
+
+    if (emptyState) {
+      emptyState.classList.toggle("hidden", results.length > 0);
+      emptyState.hidden = results.length > 0;
+    }
+
+    results.forEach(function (place, index) {
+      const card = document.createElement("article");
+      card.className = "place-card";
+
+      const art = document.createElement("div");
+      art.className = "place-art";
+
+      const symbol = document.createElement("span");
+      symbol.className = "place-symbol";
+      symbol.textContent =
+        typeof getCategorySymbol === "function"
+          ? getCategorySymbol(place.category)
+          : "📍";
+
+      const number = document.createElement("span");
+      number.className = "place-number";
+      number.textContent = String(index + 1).padStart(2, "0");
+
+      art.append(symbol, number);
+
+      const body = document.createElement("div");
+      body.className = "place-card-body";
+
+      const category = document.createElement("span");
+      category.className = "category-label";
+      category.textContent = place.category || "อื่น ๆ";
+
+      const name = document.createElement("h3");
+      name.textContent = place.name;
+
+      const description = document.createElement("p");
+      description.textContent =
+        place.description || "ยังไม่มีคำอธิบายสถานที่";
+
+      const button = document.createElement("button");
+      button.className = "button button-primary";
+      button.type = "button";
+      button.textContent = "ดูรายละเอียด";
+
+      button.addEventListener("click", function () {
+        if (typeof showPlaceDetails === "function") {
+          showPlaceDetails(place.id);
+          return;
+        }
+
+        const panel = document.getElementById("detailPanel");
+
+        if (panel) {
+          panel.textContent =
+            place.name + " — " +
+            (place.description || "ยังไม่มีคำอธิบายสถานที่");
+        }
+      });
+
+      body.append(category, name, description, button);
+      card.append(art, body);
+      placeGrid.appendChild(card);
+    });
+  }
+
+  searchInput.addEventListener("input", searchPlaces);
+  searchInput.addEventListener("search", searchPlaces);
+
+  if (clearSearch) {
+    clearSearch.addEventListener("click", function () {
+      searchInput.value = "";
+      searchInput.focus();
+      searchPlaces();
+    });
+  }
+
+  if (categoryFilters) {
+    categoryFilters.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-category]");
+      if (!button) return;
+
+      currentCategory = button.dataset.category || "ทั้งหมด";
+
+      categoryFilters.querySelectorAll("[data-category]")
+        .forEach(function (item) {
+          item.classList.toggle("active", item === button);
+        });
+
+      searchPlaces();
+    });
+  }
+
+  searchPlaces();
+})();
