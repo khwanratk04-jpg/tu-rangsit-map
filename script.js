@@ -409,6 +409,19 @@ const routeFrom = document.getElementById("routeFrom");
 const routeTo = document.getElementById("routeTo");
 const routeResults = document.getElementById("routeResults");
 
+const swapRouteButton = document.getElementById("swapRoute");
+
+if (swapRouteButton) {
+  swapRouteButton.addEventListener("click", () => {
+    const fromValue = routeFrom.value;
+    const toValue = routeTo.value;
+
+    routeFrom.value = toValue;
+    routeTo.value = fromValue;
+  });
+}
+
+
 function fillPlaceSelect(select, placeholder) {
   const previousValue = select.value;
 
