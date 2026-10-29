@@ -229,52 +229,89 @@ function renderMatchingRoutes() {
 
         ${renderRouteReviews(route)}
       </article>
+
 /* =========================================
-   5. ค้นหาวิดีโอเส้นทางและระบบรีวิว
+   5. ระบบค้นหาเส้นทางและรีวิว
+   ไม่แก้ไขระบบแสดงการ์ดสถานที่
 ========================================= */
 
 const routeFrom = document.getElementById("routeFrom");
 const routeTo = document.getElementById("routeTo");
 const routeResults = document.getElementById("routeResults");
+const findRouteButton = document.getElementById("findRoute");
 
-const REVIEW_STORAGE_KEY = "tu-rangsit-map-reviews-v1";
+const REVIEW_KEY = "tuRangsitMapRouteReviews";
 
-function loadReviews() {
+function readRouteReviews() {
   try {
     const saved = JSON.parse(
-      localStorage.getItem(REVIEW_STORAGE_KEY) || "{}"
+      localStorage.getItem(REVIEW_KEY) || "{}"
     );
+
     return saved && typeof saved === "object" ? saved : {};
-  } catch (error) {
-    console.warn("อ่านรีวิวไม่สำเร็จ", error);
+  } catch {
     return {};
   }
 }
 
-let routeReviews = loadReviews();
+let routeReviews = readRouteReviews();
 
-function saveReviews() {
+function persistRouteReviews() {
   try {
     localStorage.setItem(
-      REVIEW_STORAGE_KEY,
+      REVIEW_KEY,
       JSON.stringify(routeReviews)
     );
     return true;
   } catch (error) {
-    console.error("บันทึกรีวิวไม่สำเร็จ", error);
-    alert("บันทึกรีวิวไม่สำเร็จ กรุณาลองใหม่");
+    console.error("ไม่สามารถบันทึกรีวิวได้", error);
+    alert("บันทึกรีวิวไม่สำเร็จ กรุณาลองอีกครั้ง");
     return false;
   }
 }
 
-function getReviews(routeId) {
+function populateRouteSelect(select, placeholder) {
+  if (!select || !Array.isArray(data.places)) return;
+
+  const previousValue = select.value;
+
+  select.innerHTML = [
+    `<option value="">${escapeHTML(placeholder)}</option>`,
+    ...data.places.map(place => `
+      <option value="${escapeHTML(place.id)}">
+        ${escapeHTML(place.name)}
+      </option>
+    `)
+  ].join("");
+
+  if (data.places.some(place => place.id === previousValue)) {
+    select.value = previousValue;
+  }
+}
+
+function refreshRouteSelects() {
+  populateRouteSelect(routeFrom, "เลือกจุดเริ่มต้น");
+  populateRouteSelect(routeTo, "เลือกจุดหมายปลายทาง");
+
+  populateRouteSelect(
+    document.getElementById("adminRouteFrom"),
+    "เลือกจุดเริ่มต้น"
+  );
+
+  populateRouteSelect(
+    document.getElementById("adminRouteTo"),
+    "เลือกจุดหมายปลายทาง"
+  );
+}
+
+function getRouteReviews(routeId) {
   return Array.isArray(routeReviews[routeId])
     ? routeReviews[routeId]
     : [];
 }
 
 function renderRouteReviews(route) {
-  const reviews = getReviews(route.id);
+  const reviews = getRouteReviews(route.id);
 
   const average = reviews.length
     ? reviews.reduce((sum, item) => sum + item.rating, 0)
@@ -284,9 +321,7 @@ function renderRouteReviews(route) {
   const rounded = Math.round(average);
 
   return `
-    <section class="route-review"
-      data-review-section="${escapeHTML(route.id)}">
-
+    <section class="route-review">
       <h4>คะแนนและความคิดเห็น</h4>
 
       <div class="route-review-average">
@@ -298,17 +333,17 @@ function renderRouteReviews(route) {
       </div>
 
       <form class="route-review-form"
-        data-review-form="${escapeHTML(route.id)}">
+            data-route-id="${escapeHTML(route.id)}">
 
-        <label>ให้คะแนนหลังใช้งาน</label>
+        <label>ให้คะแนนเส้นทางนี้</label>
 
         <div class="review-star-picker">
           ${[1, 2, 3, 4, 5].map(star => `
             <button type="button"
-              class="review-star-button"
-              data-star="${star}"
-              aria-label="${star} ดาว"
-              aria-pressed="false">★</button>
+                    class="review-star-button"
+                    data-rating="${star}"
+                    aria-label="${star} ดาว"
+                    aria-pressed="false">★</button>
           `).join("")}
         </div>
 
@@ -316,13 +351,14 @@ function renderRouteReviews(route) {
 
         <label>
           ความคิดเห็น
-          <textarea name="comment" rows="3"
-            maxlength="500"
-            placeholder="วิดีโอช่วยให้เดินทางสะดวกขึ้นไหม?"
-            required></textarea>
+          <textarea name="comment"
+                    rows="3"
+                    maxlength="500"
+                    placeholder="แบ่งปันประสบการณ์การเดินทางของคุณ"
+                    required></textarea>
         </label>
 
-        <button class="button button-primary" type="submit">
+        <button type="submit" class="button button-primary">
           ส่งรีวิว
         </button>
       </form>
@@ -330,7 +366,7 @@ function renderRouteReviews(route) {
       <div class="route-review-list">
         ${
           reviews.length
-            ? reviews.slice().reverse().map(item => `
+            ? [...reviews].reverse().map(item => `
                 <article class="route-review-item">
                   <div class="review-stars">
                     ${"★".repeat(item.rating)}${"☆".repeat(5 - item.rating)}
@@ -346,87 +382,49 @@ function renderRouteReviews(route) {
   `;
 }
 
-function fillPlaceSelect(select, placeholder) {
-  if (!select) return;
-
-  const previousValue = select.value;
-
-  select.innerHTML = `
-    <option value="">${escapeHTML(placeholder)}</option>
-    ${data.places.map(place => `
-      <option value="${escapeHTML(place.id)}">
-        ${escapeHTML(place.name)}
-      </option>
-    `).join("")}
-  `;
-
-  if (data.places.some(place => place.id === previousValue)) {
-    select.value = previousValue;
-  }
-}
-
-function refreshPlaceSelects() {
-  fillPlaceSelect(routeFrom, "เลือกจุดเริ่มต้น");
-  fillPlaceSelect(routeTo, "เลือกจุดหมายปลายทาง");
-
-  fillPlaceSelect(
-    document.getElementById("adminRouteFrom"),
-    "เลือกจุดเริ่มต้น"
-  );
-
-  fillPlaceSelect(
-    document.getElementById("adminRouteTo"),
-    "เลือกจุดหมายปลายทาง"
-  );
-}
-
-function findMatchingRoutes(fromId, toId) {
-  return data.routes.filter(route =>
-    route.fromId === fromId && route.toId === toId
-  );
-}
-
 function renderMatchingRoutes() {
+  if (!routeFrom || !routeTo || !routeResults) return;
+
   const fromId = routeFrom.value;
   const toId = routeTo.value;
 
   if (!fromId || !toId) {
     routeResults.innerHTML =
-      '<p class="error-text">กรุณาเลือกทั้งต้นทางและปลายทาง</p>';
+      '<p class="error-text">กรุณาเลือกต้นทางและปลายทาง</p>';
     return;
   }
 
   if (fromId === toId) {
     routeResults.innerHTML =
-      '<p class="error-text">ต้นทางและปลายทางต้องเป็นคนละสถานที่</p>';
+      '<p class="error-text">กรุณาเลือกคนละสถานที่</p>';
     return;
   }
 
-  const routes = findMatchingRoutes(fromId, toId);
+  const matches = data.routes.filter(route =>
+    route.fromId === fromId && route.toId === toId
+  );
 
-  if (!routes.length) {
+  if (!matches.length) {
     routeResults.innerHTML = `
       <div class="empty-state">
         <h3>ยังไม่มีวิดีโอเส้นทางนี้</h3>
-        <p>ลองเลือกเส้นทางอื่น หรือเพิ่มวิดีโอผ่านระบบแอดมิน</p>
+        <p>กรุณาเลือกเส้นทางอื่น หรือเพิ่มวิดีโอผ่านระบบแอดมิน</p>
       </div>
     `;
     return;
   }
 
-  routeResults.innerHTML = routes.map(route => {
+  routeResults.innerHTML = matches.map(route => {
     const embedUrl = getYouTubeEmbedUrl(route.videoUrl);
 
     return `
       <article class="route-result-item">
-        <span class="route-badge">พบวิดีโอเส้นทาง</span>
-
         <h3>${escapeHTML(route.name)}</h3>
 
-        <div class="route-endpoints">
+        <p class="route-endpoints">
           ${escapeHTML(getPlaceName(route.fromId))}
           → ${escapeHTML(getPlaceName(route.toId))}
-        </div>
+        </p>
 
         ${
           route.description
@@ -440,17 +438,17 @@ function renderMatchingRoutes() {
                 src="${escapeHTML(embedUrl)}"
                 title="${escapeHTML(route.name)}"
                 loading="lazy"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowfullscreen></iframe>`
-            : '<p class="helper-text">ไม่สามารถแสดงตัวอย่างวิดีโอได้</p>'
+            : ""
         }
 
         <p>
           <a class="button button-primary"
-            href="${escapeHTML(route.videoUrl)}"
-            target="_blank"
-            rel="noopener noreferrer">เปิดวิดีโอ</a>
+             href="${escapeHTML(route.videoUrl)}"
+             target="_blank"
+             rel="noopener noreferrer">
+            เปิดวิดีโอ
+          </a>
         </p>
 
         ${renderRouteReviews(route)}
@@ -459,76 +457,80 @@ function renderMatchingRoutes() {
   }).join("");
 }
 
-document.getElementById("findRoute")
-  .addEventListener("click", renderMatchingRoutes);
+/* คลิกเลือกดาว */
+if (routeResults) {
+  routeResults.addEventListener("click", event => {
+    const button = event.target.closest("[data-rating]");
+    if (!button) return;
 
-/* เลือกคะแนนดาว */
-routeResults.addEventListener("click", event => {
-  const button = event.target.closest("[data-star]");
-  if (!button) return;
+    const form = button.closest(".route-review-form");
+    if (!form) return;
 
-  const form = button.closest(".route-review-form");
-  if (!form) return;
+    const rating = Number(button.dataset.rating);
+    form.querySelector('[name="rating"]').value = String(rating);
 
-  const rating = Number(button.dataset.star);
-  form.querySelector('[name="rating"]').value = String(rating);
+    form.querySelectorAll("[data-rating]").forEach(star => {
+      const selected = Number(star.dataset.rating) <= rating;
+      star.classList.toggle("selected", selected);
+      star.setAttribute(
+        "aria-pressed",
+        String(Number(star.dataset.rating) === rating)
+      );
+    });
+  });
 
-  form.querySelectorAll("[data-star]").forEach(starButton => {
-    const selected = Number(starButton.dataset.star) <= rating;
+  /* ส่งรีวิว */
+  routeResults.addEventListener("submit", event => {
+    const form = event.target.closest(".route-review-form");
+    if (!form) return;
 
-    starButton.classList.toggle("selected", selected);
-    starButton.setAttribute(
-      "aria-pressed",
-      String(Number(starButton.dataset.star) === rating)
+    event.preventDefault();
+
+    const routeId = form.dataset.routeId;
+    const rating = Number(form.querySelector('[name="rating"]').value);
+    const comment = form.querySelector('[name="comment"]').value.trim();
+
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      alert("กรุณาเลือกคะแนน 1–5 ดาว");
+      return;
+    }
+
+    if (!comment) {
+      alert("กรุณาเขียนความคิดเห็น");
+      return;
+    }
+
+    const routeExists = data.routes.some(
+      route => route.id === routeId
     );
+
+    if (!routeExists) {
+      alert("ไม่พบข้อมูลเส้นทาง กรุณาค้นหาอีกครั้ง");
+      return;
+    }
+
+    if (!routeReviews[routeId]) {
+      routeReviews[routeId] = [];
+    }
+
+    routeReviews[routeId].push({
+      rating,
+      comment,
+      date: new Date().toLocaleDateString("th-TH")
+    });
+
+    if (!persistRouteReviews()) {
+      routeReviews[routeId].pop();
+      return;
+    }
+
+    renderMatchingRoutes();
   });
-});
+}
 
-/* บันทึกความคิดเห็น */
-routeResults.addEventListener("submit", event => {
-  const form = event.target.closest(".route-review-form");
-  if (!form) return;
+if (findRouteButton) {
+  findRouteButton.addEventListener("click", renderMatchingRoutes);
+}
 
-  event.preventDefault();
-
-  const routeId = form.dataset.reviewForm;
-  const rating = Number(form.querySelector('[name="rating"]').value);
-  const comment = form.querySelector('[name="comment"]').value.trim();
-
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    alert("กรุณาเลือกคะแนน 1–5 ดาว");
-    return;
-  }
-
-  if (!comment) {
-    alert("กรุณาเขียนความคิดเห็นก่อนส่ง");
-    return;
-  }
-
-  const route = data.routes.find(item => item.id === routeId);
-
-  if (!route) {
-    alert("ไม่พบเส้นทาง กรุณาค้นหาใหม่");
-    return;
-  }
-
-  if (!routeReviews[routeId]) {
-    routeReviews[routeId] = [];
-  }
-
-  routeReviews[routeId].push({
-    rating,
-    comment,
-    date: new Date().toLocaleDateString("th-TH")
-  });
-
-  if (!saveReviews()) {
-    routeReviews[routeId].pop();
-    return;
-  }
-
-  renderMatchingRoutes();
-});
-
-refreshPlaceSelects();
+refreshRouteSelects();
 
