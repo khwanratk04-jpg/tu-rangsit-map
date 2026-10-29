@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#741d32">
+  <meta name="description" content="เว็บไซต์ช่วยค้นหาสถานที่และวิดีโอแนะนำเส้นทางในมหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต">
+  <title>TU Rangsit Map | หาทางไป ไม่หลงทาง</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="TU Rangsit Map หน้าหลัก">
+      <span class="logo">TU</span>
+      <span>TU RANGSIT MAP<small>คู่มือค้นหาสถานที่ในมหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</small></span>
+    </a>
+    <button class="button button-outline top-admin" id="adminOpen" type="button">สำหรับแอดมิน</button>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="eyebrow">THAMMASAT UNIVERSITY · RANGSIT</div>
+      <h1>ไปให้ถึงที่หมาย<br>ไม่ต้องกลัวหลงทาง</h1>
+      <p>ค้นหาสถานที่ที่ต้องการ พร้อมดูรายละเอียดและวิดีโอแนะนำเส้นทางภายในมหาวิทยาลัย</p>
+      <div class="searchbar">
+        <input id="searchInput" type="search" placeholder="ลองค้นหา เช่น SC123, หอใน, สระว่ายน้ำ" aria-label="ค้นหาสถานที่">
+        <button class="button button-gold" id="clearSearch" type="button">ล้างการค้นหา</button>
+      </div>
+      <div class="hero-pills"><span>⌕ ค้นหาง่าย</span><span>▶ วิดีโอแนะนำเส้นทาง</span><span>✦ ใช้งานบนมือถือ</span></div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading">
+        <div><p class="eyebrow dark">EXPLORE CAMPUS</p><h2>สถานที่ในมหาวิทยาลัย</h2><p class="muted">เลือกสถานที่เพื่อดูรายละเอียดและเส้นทาง</p></div>
+        <span id="placeCount" class="count-pill">0 สถานที่</span>
+      </div>
+      <div class="filters" id="categoryFilters" aria-label="กรองตามหมวดหมู่">
+        <button class="filter active" data-category="ทั้งหมด" type="button">ทั้งหมด</button>
+        <button class="filter" data-category="การเรียน" type="button">อาคารเรียน</button>
+        <button class="filter" data-category="กีฬา" type="button">กีฬา</button>
+        <button class="filter" data-category="ที่พัก" type="button">ที่พัก</button>
+        <button class="filter" data-category="ส่วนกลาง" type="button">ส่วนกลาง</button>
+        <button class="filter" data-category="อื่น ๆ" type="button">อื่น ๆ</button>
+      </div>
+
+      <div class="main-grid">
+        <div>
+          <div class="place-grid" id="placeGrid"></div>
+          <div id="emptyState" class="empty-state hidden"><h3>ไม่พบสถานที่</h3><p>ลองค้นหาด้วยคำอื่น หรือเลือกหมวดหมู่ทั้งหมด</p></div>
+        </div>
+        <aside class="detail-panel" id="detailPanel">
+          <div class="map-illustration"><span class="map-pin">⌖</span><strong>TU Rangsit</strong><small>แผนผังประกอบเว็บไซต์ต้นแบบ</small></div>
+          <div class="detail-placeholder"><span class="placeholder-icon">⌖</span><h3>เลือกสถานที่ที่ต้องการ</h3><p>รายละเอียดสถานที่และวิดีโอแนะนำเส้นทางจะแสดงที่นี่</p></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="route-section section-block" id="routeSection">
+      <div class="section-heading"><div><p class="eyebrow dark">FIND YOUR WAY</p><h2>ค้นหาวิดีโอเส้นทาง</h2><p class="muted">เลือกต้นทางและปลายทางเพื่อดูวิดีโอแนะนำการเดินทาง</p></div></div>
+      <div class="route-search">
+        <div class="field"><label for="routeFrom">ต้นทาง</label><select id="routeFrom"><option value="">กำลังโหลดสถานที่...</option></select></div>
+        <button class="swap-button" id="swapRoute" type="button" aria-label="สลับต้นทางและปลายทาง" title="สลับต้นทางและปลายทาง">⇄</button>
+        <div class="field"><label for="routeTo">ปลายทาง</label><select id="routeTo"><option value="">กำลังโหลดสถานที่...</option></select></div>
+        <button class="button button-primary find-button" id="findRoute" type="button">ค้นหาเส้นทาง ↗</button>
+      </div>
+      <div id="routeResults" class="route-results" aria-live="polite"></div>
+    </section>
+
+    <footer class="footer">TU Rangsit Map · เว็บไซต์ต้นแบบสำหรับช่วยค้นหาสถานที่ภายในมหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต</footer>
+  </main>
+
+  <dialog id="loginDialog" class="dialog">
+    <form id="loginForm" class="dialog-card">
+      <button class="dialog-close" type="button" data-close="loginDialog" aria-label="ปิด">×</button>
+      <p class="eyebrow dark">ADMIN ACCESS</p><h2>เข้าสู่ระบบผู้ดูแล</h2>
+      <p class="muted">เข้าสู่ระบบเพื่อจัดการสถานที่และวิดีโอเส้นทาง</p>
+      <div class="field"><label for="adminUsername">ชื่อผู้ใช้</label><input id="adminUsername" autocomplete="username" value="admin" required></div>
+      <div class="field"><label for="adminPassword">รหัสผ่าน</label><input id="adminPassword" type="password" autocomplete="current-password" required></div>
+      <p class="error-text" id="loginError" role="alert"></p>
+      <button class="button button-primary full-button" type="submit">เข้าสู่ระบบ</button>
+      <p class="notice">บัญชีทดลอง: <b>admin</b> / <b>tu-demo-2026</b><br>ระบบล็อกอินนี้เป็นเพียงต้นแบบ ไม่ใช่ระบบยืนยันตัวตนที่ปลอดภัยสำหรับข้อมูลจริง</p>
+    </form>
+  </dialog>
+
+  <dialog id="adminDialog" class="dialog admin-dialog">
+    <div class="dialog-card wide-card">
+      <div class="admin-dialog-heading"><div><p class="eyebrow dark">CONTROL PANEL</p><h2>จัดการเว็บไซต์</h2></div><button class="dialog-close" type="button" data-close="adminDialog" aria-label="ปิด">×</button></div>
+      <div class="admin-toolbar"><button class="button button-light" id="adminLogout" type="button">ออกจากระบบ</button></div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="placesTab" type="button">จัดการสถานที่</button>
+        <button class="admin-tab" data-tab="routesTab" type="button">จัดการวิดีโอเส้นทาง</button>
+        <button class="admin-tab" data-tab="dataTab" type="button">สำรองข้อมูล</button>
+      </div>
+
+      <section id="placesTab" class="admin-content">
+        <h3 id="placeFormTitle">เพิ่มสถานที่ใหม่</h3>
+        <form id="placeForm" class="form-grid">
+          <input type="hidden" id="editPlaceId">
+          <div class="field"><label for="placeName">ชื่อสถานที่ *</label><input id="placeName" required maxlength="100"></div>
+          <div class="field"><label for="placeCategory">หมวดหมู่ *</label><select id="placeCategory" required><option>การเรียน</option><option>กีฬา</option><option>ที่พัก</option><option>ส่วนกลาง</option><option>อื่น ๆ</option></select></div>
+          <div class="field full"><label for="placeDescription">รายละเอียด</label><textarea id="placeDescription" rows="2" maxlength="500" placeholder="รายละเอียดหรือจุดสังเกต"></textarea></div>
+          <div class="field full"><label for="placeMap">ลิงก์แผนที่ (ถ้ามี)</label><input id="placeMap" type="url" placeholder="https://maps.google.com/..."></div>
+          <div class="form-actions full"><button class="button button-primary" type="submit">บันทึกสถานที่</button><button class="button button-light" id="cancelPlaceEdit" type="button">ล้างแบบฟอร์ม</button></div>
+        </form>
+        <h3 class="list-heading">รายการสถานที่ทั้งหมด</h3><div id="adminPlaceList" class="admin-list"></div>
+      </section>
+
+      <section id="routesTab" class="admin-content hidden">
+        <h3 id="routeFormTitle">เพิ่มวิดีโอเส้นทาง</h3>
+        <form id="routeForm" class="form-grid">
+          <input type="hidden" id="editRouteId">
+          <div class="field full"><label for="routeName">ชื่อเส้นทาง/วิดีโอ *</label><input id="routeName" required maxlength="120" placeholder="เช่น จากหอในไปคณะสังคม"></div>
+          <div class="field"><label for="adminRouteFrom">ต้นทาง *</label><select id="adminRouteFrom" required><option value="">กำลังโหลดสถานที่...</option></select></div>
+          <div class="field"><label for="adminRouteTo">ปลายทาง *</label><select id="adminRouteTo" required><option value="">กำลังโหลดสถานที่...</option></select></div>
+          <div class="field full"><label for="routeVideo">ลิงก์วิดีโอ *</label><input id="routeVideo" type="url" required placeholder="https://www.youtube.com/watch?v=..."></div>
+          <div class="field full"><label for="routeDescription">คำอธิบายเพิ่มเติม</label><textarea id="routeDescription" rows="2" maxlength="500" placeholder="จุดสังเกตหรือคำแนะนำระหว่างทาง"></textarea></div>
+          <div class="form-actions full"><button class="button button-primary" type="submit">บันทึกวิดีโอเส้นทาง</button><button class="button button-light" id="cancelRouteEdit" type="button">ล้างแบบฟอร์ม</button></div>
+        </form>
+        <h3 class="list-heading">รายการวิดีโอเส้นทางทั้งหมด</h3><div id="adminRouteList" class="admin-list"></div>
+      </section>
+
+      <section id="dataTab" class="admin-content hidden">
+        <h3>สำรองและย้ายข้อมูล</h3><p class="muted">ส่งออกข้อมูลเป็น JSON เพื่อเก็บสำรอง หรือนำเข้าไฟล์เดิมเพื่อกู้คืน</p>
+        <div class="form-actions"><button class="button button-primary" id="exportData" type="button">ส่งออกข้อมูล JSON</button><label class="button button-light upload-button">นำเข้า JSON<input id="importData" type="file" accept=".json,application/json"></label></div>
+        <p id="dataMessage" class="success-text" aria-live="polite"></p>
+        <p class="notice">ข้อมูลสถานที่ เส้นทาง และรีวิวจะเก็บในเบราว์เซอร์ของผู้ใช้แต่ละคนผ่าน LocalStorage ไม่ได้ซิงก์เป็นฐานข้อมูลกลาง รีวิวจากผู้ใช้คนอื่นจึงไม่ปรากฏบนอุปกรณ์อื่นโดยอัตโนมัติ</p>
+      </section>
+    </div>
+  </dialog>
+</body>
+</html>
