@@ -1,3 +1,4 @@
+
 "use strict";
 
 /* =========================================
@@ -5,8 +6,44 @@
 ========================================= */
 
 const STORAGE_KEY = "tu-rangsit-map-data-v1";
-const ADMIN_USER = "admin";
-const ADMIN_PASS = "tu-demo-2026";
+const REVIEW_STORAGE_KEY = "tu-rangsit-map-reviews-v1";
+
+/* ใส่ค่าจาก Firebase Console > Project settings > Your apps */
+const firebaseConfig = {
+   apiKey: "AIzaSyDk_m9skPljnwwza8buLJXf5N850HqBImQ",
+  authDomain: "tu100-b7672.firebaseapp.com",
+  projectId: "tu100-b7672",
+  storageBucket: "tu100-b7672.firebasestorage.app",
+  messagingSenderId: "1048400546669",
+  appId: "1:1048400546669:web:f817e52fb8591aa0a6e864",
+  measurementId: "G-RFS5JT5QL2"
+};
+
+const FIREBASE_CONFIGURED =
+  firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("PASTE_") &&
+  firebaseConfig.projectId && !firebaseConfig.projectId.startsWith("YOUR_") &&
+  firebaseConfig.appId && !firebaseConfig.appId.startsWith("YOUR_");
+
+let firebaseApp = null;
+let auth = null;
+let db = null;
+let cloudDataRef = null;
+let cloudReviewsRef = null;
+let cloudSyncStarted = false;
+
+if (FIREBASE_CONFIGURED && window.firebase) {
+  try {
+    firebaseApp = firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    cloudDataRef = db.collection("appData").doc("main");
+    cloudReviewsRef = db.collection("reviews");
+  } catch (error) {
+    console.error("เริ่มต้น Firebase ไม่สำเร็จ", error);
+  }
+} else {
+  console.warn("ยังไม่ได้ตั้งค่า Firebase: เว็บไซต์จะใช้ข้อมูลในเบราว์เซอร์นี้เท่านั้นจนกว่าจะใส่ค่าการเชื่อมต่อ");
+}
 
 const initialPlaces = [
   { id: "gym45", name: "ยิม 4-5", category: "กีฬา", description: "อาคารกีฬา ยิม 4-5", mapUrl: "" },
@@ -75,8 +112,14 @@ function loadData() {
       const parsed = JSON.parse(saved);
 
       if (Array.isArray(parsed.places) && Array.isArray(parsed.routes)) {
+        // เพิ่มสถานที่ตั้งต้นที่ขาดไป โดยไม่เขียนทับข้อมูลที่ผู้ใช้แก้ไขไว้
+        const savedIds = new Set(parsed.places.map(place => place.id));
+        const missingDefaults = initialPlaces
+          .filter(place => !savedIds.has(place.id))
+          .map(place => ({ ...place }));
+
         return {
-          places: parsed.places,
+          places: [...parsed.places, ...missingDefaults],
           routes: parsed.routes
         };
       }
@@ -94,12 +137,23 @@ function loadData() {
 function saveData() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    return true;
   } catch (error) {
-    alert("บันทึกข้อมูลไม่สำเร็จ พื้นที่จัดเก็บอาจเต็ม");
+    alert("บันทึกข้อมูลในเบราว์เซอร์ไม่สำเร็จ พื้นที่จัดเก็บอาจเต็ม");
     console.error(error);
     return false;
   }
+
+  if (db && auth && auth.currentUser) {
+    cloudDataRef.set({
+      places: data.places,
+      routes: data.routes,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(error => {
+      console.error("ซิงก์ข้อมูลขึ้น Firebase ไม่สำเร็จ", error);
+      alert("บันทึกในเครื่องแล้ว แต่ซิงก์ออนไลน์ไม่สำเร็จ กรุณาตรวจสอบการตั้งค่า Firebase และ Firestore Rules");
+    });
+  }
+  return true;
 }
 
 function getPlace(placeId) {
@@ -258,167 +312,6 @@ function getYouTubeEmbedUrl(value) {
   }
 }
 
-/* =========================================
-   ระบบให้คะแนนและรีวิวเส้นทาง
-   หมายเหตุ: รีวิวเก็บใน LocalStorage ของเบราว์เซอร์นี้
-========================================= */
-
-const REVIEW_STORAGE_KEY = "tu-rangsit-map-reviews-v1";
-let routeReviews = loadReviews();
-let selectedReviewStars = {};
-
-function loadReviews() {
-  try {
-    const saved = localStorage.getItem(REVIEW_STORAGE_KEY);
-    const parsed = saved ? JSON.parse(saved) : {};
-
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-      ? parsed
-      : {};
-  } catch (error) {
-    console.warn("อ่านรีวิวเดิมไม่สำเร็จ", error);
-    return {};
-  }
-}
-
-function saveReviews() {
-  try {
-    localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(routeReviews));
-    return true;
-  } catch (error) {
-    alert("บันทึกรีวิวไม่สำเร็จ พื้นที่จัดเก็บอาจเต็ม");
-    return false;
-  }
-}
-
-function renderReviewSection(routeId) {
-  const reviews = Array.isArray(routeReviews[routeId])
-    ? routeReviews[routeId]
-    : [];
-
-  const average = reviews.length
-    ? reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length
-    : 0;
-
-  const stars = average
-    ? "★".repeat(Math.round(average)) + "☆".repeat(5 - Math.round(average))
-    : "☆☆☆☆☆";
-
-  return `
-    <section class="route-review" data-review-section="${escapeHTML(routeId)}">
-      <div class="route-review-heading">
-        <h4>รีวิวเส้นทางนี้</h4>
-        <div class="route-review-average">
-          <strong>${average ? average.toFixed(1) : "—"}</strong>
-          <span class="review-stars" aria-label="คะแนนเฉลี่ย">${stars}</span>
-          <small>${reviews.length} รีวิว</small>
-        </div>
-      </div>
-      <form class="route-review-form" data-review-form="${escapeHTML(routeId)}">
-        <label>ให้คะแนนเส้นทาง</label>
-        <div class="review-star-picker" role="group" aria-label="เลือกคะแนน 1 ถึง 5 ดาว">
-          ${[1, 2, 3, 4, 5].map(n => `
-            <button class="review-star-button ${Number(selectedReviewStars[routeId] || 0) >= n ? "selected" : ""}"
-              type="button" data-review-star="${n}" data-review-route="${escapeHTML(routeId)}"
-              aria-label="${n} ดาว" aria-pressed="${Number(selectedReviewStars[routeId] || 0) >= n}">★</button>
-          `).join("")}
-        </div>
-        <label>ความคิดเห็น (ไม่บังคับ)
-          <textarea name="reviewText" rows="3" maxlength="500" placeholder="บอกเล่าประสบการณ์การใช้เส้นทางนี้"></textarea>
-        </label>
-        <button class="button button-primary" type="submit">ส่งรีวิว</button>
-      </form>
-      <div class="route-review-list">
-        ${reviews.length ? reviews.slice().reverse().map(review => `
-          <article class="route-review-item">
-            <div class="route-review-item-top">
-              <span class="review-stars">${"★".repeat(Math.max(0, Math.min(5, Number(review.rating) || 0)))}${"☆".repeat(5 - Math.max(0, Math.min(5, Number(review.rating) || 0)))}</span>
-              <small>${escapeHTML(review.date || "")}</small>
-            </div>
-            ${review.text
-              ? `<p>${escapeHTML(review.text)}</p>`
-              : `<p class="helper-text">ไม่ได้เขียนความคิดเห็นเพิ่มเติม</p>`}
-          </article>
-        `).join("") : `<p class="helper-text">ยังไม่มีรีวิว เป็นคนแรกที่ให้คะแนนเส้นทางนี้ได้เลย</p>`}
-      </div>
-    </section>
-  `;
-}
-
-document.addEventListener("click", event => {
-  const star = event.target.closest("[data-review-star]");
-  if (!star) return;
-
-  const routeId = star.dataset.reviewRoute;
-  selectedReviewStars[routeId] = Number(star.dataset.reviewStar);
-
-  const section = star.closest("[data-review-section]");
-  if (!section) return;
-
-  const picker = section.querySelector(".review-star-picker");
-
-  picker.querySelectorAll("[data-review-star]").forEach(button => {
-    const selected =
-      Number(button.dataset.reviewStar) <= selectedReviewStars[routeId];
-
-    button.classList.toggle("selected", selected);
-    button.setAttribute("aria-pressed", String(selected));
-  });
-});
-
-document.addEventListener("submit", event => {
-  const form = event.target.closest("[data-review-form]");
-  if (!form) return;
-
-  event.preventDefault();
-
-  const routeId = form.dataset.reviewForm;
-  const rating = Number(selectedReviewStars[routeId] || 0);
-  const text = String(new FormData(form).get("reviewText") || "").trim();
-
-  if (rating < 1 || rating > 5) {
-    alert("กรุณาเลือกคะแนนดาวก่อนส่งรีวิว");
-    return;
-  }
-
-  if (!data.routes.some(route => route.id === routeId)) {
-    alert("ไม่พบเส้นทางนี้ กรุณาลองใหม่อีกครั้ง");
-    return;
-  }
-
-  const list = Array.isArray(routeReviews[routeId])
-    ? routeReviews[routeId]
-    : [];
-
-  list.push({
-    rating,
-    text,
-    date: new Date().toLocaleDateString("th-TH", {
-      year: "numeric",
-      month: "short",
-      day: "numeric"
-    })
-  });
-
-  routeReviews[routeId] = list;
-
-  if (!saveReviews()) return;
-
-  selectedReviewStars[routeId] = 0;
-
-  // แสดงคะแนนเฉลี่ยและรีวิวใหม่ทันที
-  const fromId = routeFrom.value;
-  const toId = routeTo.value;
-
-  if (selectedPlaceId && getPlace(selectedPlaceId)) {
-    showPlaceDetails(selectedPlaceId);
-  }
-
-  if (fromId && toId) {
-    document.getElementById("findRoute").click();
-  }
-});
-
 function showPlaceDetails(placeId) {
   const place = getPlace(placeId);
   if (!place) return;
@@ -517,8 +410,6 @@ const routeTo = document.getElementById("routeTo");
 const routeResults = document.getElementById("routeResults");
 
 function fillPlaceSelect(select, placeholder) {
-  if (!select) return;
-
   const previousValue = select.value;
 
   select.innerHTML = `
@@ -538,12 +429,10 @@ function fillPlaceSelect(select, placeholder) {
 function refreshPlaceSelects() {
   fillPlaceSelect(routeFrom, "เลือกจุดเริ่มต้น");
   fillPlaceSelect(routeTo, "เลือกจุดหมายปลายทาง");
-
   fillPlaceSelect(
     document.getElementById("adminRouteFrom"),
     "เลือกจุดเริ่มต้น"
   );
-
   fillPlaceSelect(
     document.getElementById("adminRouteTo"),
     "เลือกจุดหมายปลายทาง"
@@ -554,17 +443,6 @@ function findMatchingRoutes(fromId, toId) {
   return data.routes.filter(route =>
     route.fromId === fromId && route.toId === toId
   );
-}
-
-const swapRouteButton = document.getElementById("swapRoute");
-
-if (swapRouteButton) {
-  swapRouteButton.addEventListener("click", () => {
-    const oldFrom = routeFrom.value;
-    routeFrom.value = routeTo.value;
-    routeTo.value = oldFrom;
-    routeResults.innerHTML = "";
-  });
 }
 
 document.getElementById("findRoute").addEventListener("click", () => {
@@ -656,31 +534,68 @@ document.querySelectorAll("[data-close]").forEach(button => {
   });
 });
 
-document.getElementById("loginForm").addEventListener("submit", event => {
+document.getElementById("loginForm").addEventListener("submit", async event => {
   event.preventDefault();
 
-  const username = document.getElementById("adminUsername").value;
+  const email = document.getElementById("adminUsername").value.trim();
   const password = document.getElementById("adminPassword").value;
+  const errorBox = document.getElementById("loginError");
 
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
+  if (!auth || !db) {
+    errorBox.textContent = "ยังไม่ได้ตั้งค่า Firebase กรุณาใส่ firebaseConfig ในไฟล์ script.js ก่อน";
+    return;
+  }
+
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
     isAdmin = true;
+
+    const cloudSnapshot = await cloudDataRef.get();
+    if (cloudSnapshot.exists) {
+      const cloudData = cloudSnapshot.data();
+      if (Array.isArray(cloudData.places) && Array.isArray(cloudData.routes)) {
+        data = { places: cloudData.places, routes: cloudData.routes };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+    } else {
+      // ย้ายข้อมูลเดิมจากเบราว์เซอร์แอดมินขึ้น Cloud Firestore ครั้งแรก
+      await cloudDataRef.set({
+        places: data.places,
+        routes: data.routes,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    await migrateLocalReviewsIfNeeded();
     loginDialog.close();
     document.getElementById("loginForm").reset();
-    document.getElementById("loginError").textContent = "";
-
+    errorBox.textContent = "";
+    refreshAll();
     renderAdminLists();
     adminDialog.showModal();
-  } else {
-    document.getElementById("loginError").textContent =
-      "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
+  } catch (error) {
+    console.error("Firebase sign-in failed", error);
+    const messages = {
+      "auth/invalid-credential": "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+      "auth/invalid-email": "รูปแบบอีเมลไม่ถูกต้อง",
+      "auth/user-not-found": "ไม่พบบัญชีนี้ใน Firebase Authentication",
+      "auth/wrong-password": "รหัสผ่านไม่ถูกต้อง",
+      "auth/too-many-requests": "มีการลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอสักครู่",
+      "permission-denied": "ไม่มีสิทธิ์เข้าถึงฐานข้อมูล โปรดตรวจสอบ Firestore Rules"
+    };
+    errorBox.textContent = messages[error.code] || "เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบบัญชี Firebase และการเชื่อมต่อ";
   }
 });
 
-document.getElementById("adminLogout").addEventListener("click", () => {
+document.getElementById("adminLogout").addEventListener("click", async () => {
   isAdmin = false;
   adminDialog.close();
   resetPlaceForm();
   resetRouteForm();
+  if (auth) {
+    try { await auth.signOut(); }
+    catch (error) { console.warn("ออกจากระบบ Firebase ไม่สำเร็จ", error); }
+  }
 });
 
 document.querySelectorAll(".admin-tab").forEach(button => {
@@ -700,7 +615,6 @@ function requireAdmin() {
     alert("กรุณาเข้าสู่ระบบแอดมินก่อน");
     return false;
   }
-
   return true;
 }
 
@@ -798,7 +712,6 @@ function deletePlace(placeId) {
 
   if (selectedPlaceId === placeId) {
     selectedPlaceId = null;
-
     detailPanel.innerHTML = `
       <div class="detail-placeholder">
         <span class="placeholder-icon">⌖</span>
@@ -867,11 +780,7 @@ routeForm.addEventListener("submit", event => {
     if (!route) return;
 
     Object.assign(route, {
-      name,
-      fromId,
-      toId,
-      videoUrl,
-      description
+      name, fromId, toId, videoUrl, description
     });
   } else {
     data.routes.push({
@@ -1009,11 +918,9 @@ document.getElementById("exportData").addEventListener("click", () => {
 
   anchor.href = url;
   anchor.download = "tu-rangsit-map-backup.json";
-
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-
   URL.revokeObjectURL(url);
 
   document.getElementById("dataMessage").textContent =
@@ -1077,7 +984,6 @@ document.getElementById("importData").addEventListener("change", async event => 
     }
 
     selectedPlaceId = null;
-
     resetPlaceForm();
     resetRouteForm();
     refreshAll();
@@ -1109,8 +1015,297 @@ function refreshAll() {
   routeResults.innerHTML = "";
 }
 
-function initializeWebsite() {
+async function initializeWebsite() {
+  if (db && !cloudSyncStarted) {
+    cloudSyncStarted = true;
+
+    // รับข้อมูลสถานที่และวิดีโอที่อัปเดตจากอุปกรณ์อื่นแบบเรียลไทม์
+    cloudDataRef.onSnapshot(snapshot => {
+      if (!snapshot.exists) return;
+      const cloudData = snapshot.data();
+      if (!Array.isArray(cloudData.places) || !Array.isArray(cloudData.routes)) return;
+      data = { places: cloudData.places, routes: cloudData.routes };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+      refreshAll();
+      if (isAdmin) renderAdminLists();
+    }, error => console.error("อ่านข้อมูล Cloud Firestore ไม่สำเร็จ", error));
+
+    startCloudReviewsSync();
+  }
+
   refreshAll();
 }
 
 initializeWebsite();
+
+/* =========================================
+   ระบบให้คะแนนและรีวิวเส้นทาง
+   รีวิวเก็บใน LocalStorage ของเบราว์เซอร์นี้
+========================================= */
+
+
+let routeReviews = loadReviews();
+let selectedReviewStars = {};
+
+function loadReviews() {
+  try {
+    const saved = localStorage.getItem(REVIEW_STORAGE_KEY);
+    const parsed = saved ? JSON.parse(saved) : {};
+
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch (error) {
+    console.warn("อ่านรีวิวเดิมไม่สำเร็จ", error);
+    return {};
+  }
+}
+
+function saveReviews(routeId = null, review = null) {
+  try {
+    localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(routeReviews));
+  } catch (error) {
+    alert("บันทึกรีวิวในเบราว์เซอร์ไม่สำเร็จ");
+    return false;
+  }
+
+  // รีวิวใหม่ถูกเพิ่มเป็นเอกสารแยก เพื่อไม่ให้ผู้ใช้ทั่วไปเขียนทับรีวิวทั้งหมด
+  if (db && routeId && review) {
+    cloudReviewsRef.add({
+      routeId,
+      rating: Number(review.rating),
+      text: String(review.text || "").slice(0, 500),
+      date: review.date || new Date().toLocaleDateString("th-TH"),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(error => {
+      console.error("บันทึกรีวิวออนไลน์ไม่สำเร็จ", error);
+      alert("บันทึกรีวิวในเครื่องแล้ว แต่ซิงก์ออนไลน์ไม่สำเร็จ กรุณาตรวจสอบ Firestore Rules");
+    });
+  }
+  return true;
+}
+
+function startCloudReviewsSync() {
+  if (!cloudReviewsRef) return;
+  cloudReviewsRef.onSnapshot(snapshot => {
+    // ถ้าฐานข้อมูลยังไม่มีรีวิว ให้คงรีวิวเก่าในเบราว์เซอร์ไว้เพื่อรอการย้ายข้อมูล
+    if (snapshot.empty) return;
+    const nextReviews = {};
+    snapshot.forEach(doc => {
+      const item = doc.data();
+      if (!item || typeof item.routeId !== "string") return;
+      if (!Array.isArray(nextReviews[item.routeId])) nextReviews[item.routeId] = [];
+      nextReviews[item.routeId].push({
+        rating: Number(item.rating) || 0,
+        text: String(item.text || ""),
+        date: String(item.date || "")
+      });
+    });
+    routeReviews = nextReviews;
+    try { localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(routeReviews)); } catch (_) {}
+    if (selectedPlaceId && getPlace(selectedPlaceId)) showPlaceDetails(selectedPlaceId);
+    const fromId = routeFrom.value;
+    const toId = routeTo.value;
+    if (fromId && toId) document.getElementById("findRoute").click();
+  }, error => console.error("อ่านรีวิวจาก Cloud Firestore ไม่สำเร็จ", error));
+}
+
+async function migrateLocalReviewsIfNeeded() {
+  if (!cloudReviewsRef) return;
+  const snapshot = await cloudReviewsRef.limit(1).get();
+  if (!snapshot.empty) return;
+  const pending = [];
+  Object.entries(routeReviews).forEach(([routeId, reviews]) => {
+    if (!Array.isArray(reviews)) return;
+    reviews.forEach(review => pending.push(cloudReviewsRef.add({
+      routeId,
+      rating: Number(review.rating) || 0,
+      text: String(review.text || "").slice(0, 500),
+      date: String(review.date || ""),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    })));
+  });
+  if (pending.length) await Promise.all(pending);
+}
+
+function renderReviewSection(routeId) {
+  const reviews = Array.isArray(routeReviews[routeId])
+    ? routeReviews[routeId]
+    : [];
+
+  const average = reviews.length
+    ? reviews.reduce(
+        (sum, item) => sum + Number(item.rating || 0),
+        0
+      ) / reviews.length
+    : 0;
+
+  const stars = average
+    ? "★".repeat(Math.round(average)) +
+      "☆".repeat(5 - Math.round(average))
+    : "☆☆☆☆☆";
+
+  return `
+    <section class="route-review"
+      data-review-section="${escapeHTML(routeId)}">
+
+      <div class="route-review-heading">
+        <h4>รีวิวเส้นทางนี้</h4>
+
+        <div class="route-review-average">
+          <strong>${average ? average.toFixed(1) : "—"}</strong>
+          <span class="review-stars" aria-label="คะแนนเฉลี่ย">
+            ${stars}
+          </span>
+          <small>${reviews.length} รีวิว</small>
+        </div>
+      </div>
+
+      <form class="route-review-form"
+        data-review-form="${escapeHTML(routeId)}">
+
+        <label>ให้คะแนนเส้นทาง</label>
+
+        <div class="review-star-picker"
+          role="group"
+          aria-label="เลือกคะแนน 1 ถึง 5 ดาว">
+
+          ${[1, 2, 3, 4, 5].map(n => `
+            <button
+              class="review-star-button ${
+                Number(selectedReviewStars[routeId] || 0) >= n
+                  ? "selected"
+                  : ""
+              }"
+              type="button"
+              data-review-star="${n}"
+              data-review-route="${escapeHTML(routeId)}"
+              aria-label="${n} ดาว"
+              aria-pressed="${
+                Number(selectedReviewStars[routeId] || 0) >= n
+              }">★</button>
+          `).join("")}
+        </div>
+
+        <label>
+          ความคิดเห็น (ไม่บังคับ)
+          <textarea
+            name="reviewText"
+            rows="3"
+            maxlength="500"
+            placeholder="บอกเล่าประสบการณ์การใช้เส้นทางนี้"></textarea>
+        </label>
+
+        <button class="button button-primary" type="submit">
+          ส่งรีวิว
+        </button>
+      </form>
+
+      <div class="route-review-list">
+        ${
+          reviews.length
+            ? reviews.slice().reverse().map(review => `
+              <article class="route-review-item">
+                <div class="route-review-item-top">
+                  <span class="review-stars">${
+                    "★".repeat(
+                      Math.max(0, Math.min(5, Number(review.rating) || 0))
+                    )
+                  }${
+                    "☆".repeat(
+                      5 - Math.max(0, Math.min(5, Number(review.rating) || 0))
+                    )
+                  }</span>
+                  <small>${escapeHTML(review.date || "")}</small>
+                </div>
+
+                ${
+                  review.text
+                    ? `<p>${escapeHTML(review.text)}</p>`
+                    : `<p class="helper-text">ไม่ได้เขียนความคิดเห็นเพิ่มเติม</p>`
+                }
+              </article>
+            `).join("")
+            : `<p class="helper-text">
+                ยังไม่มีรีวิว เป็นคนแรกที่ให้คะแนนเส้นทางนี้ได้เลย
+              </p>`
+        }
+      </div>
+    </section>
+  `;
+}
+
+document.addEventListener("click", event => {
+  const star = event.target.closest("[data-review-star]");
+  if (!star) return;
+
+  const routeId = star.dataset.reviewRoute;
+  selectedReviewStars[routeId] = Number(star.dataset.reviewStar);
+
+  const section = star.closest("[data-review-section]");
+  if (!section) return;
+
+  const picker = section.querySelector(".review-star-picker");
+
+  picker.querySelectorAll("[data-review-star]").forEach(button => {
+    const selected =
+      Number(button.dataset.reviewStar) <= selectedReviewStars[routeId];
+
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+});
+
+document.addEventListener("submit", event => {
+  const form = event.target.closest("[data-review-form]");
+  if (!form) return;
+
+  event.preventDefault();
+
+  const routeId = form.dataset.reviewForm;
+  const rating = Number(selectedReviewStars[routeId] || 0);
+  const text = String(
+    new FormData(form).get("reviewText") || ""
+  ).trim();
+
+  if (rating < 1 || rating > 5) {
+    alert("กรุณาเลือกคะแนนดาวก่อนส่งรีวิว");
+    return;
+  }
+
+  if (!data.routes.some(route => route.id === routeId)) {
+    alert("ไม่พบเส้นทางนี้ กรุณาลองใหม่อีกครั้ง");
+    return;
+  }
+
+  const list = Array.isArray(routeReviews[routeId])
+    ? routeReviews[routeId]
+    : [];
+
+  const newReview = {
+    rating,
+    text,
+    date: new Date().toLocaleDateString("th-TH", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    })
+  };
+  list.push(newReview);
+  routeReviews[routeId] = list;
+
+  if (!saveReviews(routeId, newReview)) return;
+
+  selectedReviewStars[routeId] = 0;
+
+  const fromId = routeFrom.value;
+  const toId = routeTo.value;
+
+  if (selectedPlaceId && getPlace(selectedPlaceId)) {
+    showPlaceDetails(selectedPlaceId);
+  }
+
+  if (fromId && toId) {
+    document.getElementById("findRoute").click();
+  }
+});

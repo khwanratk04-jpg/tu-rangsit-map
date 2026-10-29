@@ -7,6 +7,9 @@
   <meta name="description" content="เว็บไซต์ช่วยค้นหาสถานที่และวิดีโอแนะนำเส้นทางในมหาวิทยาลัยธรรมศาสตร์ ศูนย์รังสิต">
   <title>TU Rangsit Map | หาทางไป ไม่หลงทาง</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -75,11 +78,11 @@
       <button class="dialog-close" type="button" data-close="loginDialog" aria-label="ปิด">×</button>
       <p class="eyebrow dark">ADMIN ACCESS</p><h2>เข้าสู่ระบบผู้ดูแล</h2>
       <p class="muted">เข้าสู่ระบบเพื่อจัดการสถานที่และวิดีโอเส้นทาง</p>
-      <div class="field"><label for="adminUsername">ชื่อผู้ใช้</label><input id="adminUsername" autocomplete="username" value="admin" required></div>
+      <div class="field"><label for="adminUsername">อีเมลแอดมิน</label><input id="adminUsername" type="email" autocomplete="username" placeholder="admin@example.com" required></div>
       <div class="field"><label for="adminPassword">รหัสผ่าน</label><input id="adminPassword" type="password" autocomplete="current-password" required></div>
       <p class="error-text" id="loginError" role="alert"></p>
       <button class="button button-primary full-button" type="submit">เข้าสู่ระบบ</button>
-      <p class="notice">บัญชีทดลอง: <b>admin</b> / <b>tu-demo-2026</b><br>ระบบล็อกอินนี้เป็นเพียงต้นแบบ ไม่ใช่ระบบยืนยันตัวตนที่ปลอดภัยสำหรับข้อมูลจริง</p>
+      <p class="notice">ใช้บัญชีอีเมลที่สร้างไว้ใน Firebase Authentication<br>ต้องตั้งค่า Firebase ก่อนจึงจะเข้าสู่ระบบได้</p>
     </form>
   </dialog>
 
@@ -124,7 +127,7 @@
         <h3>สำรองและย้ายข้อมูล</h3><p class="muted">ส่งออกข้อมูลเป็น JSON เพื่อเก็บสำรอง หรือนำเข้าไฟล์เดิมเพื่อกู้คืน</p>
         <div class="form-actions"><button class="button button-primary" id="exportData" type="button">ส่งออกข้อมูล JSON</button><label class="button button-light upload-button">นำเข้า JSON<input id="importData" type="file" accept=".json,application/json"></label></div>
         <p id="dataMessage" class="success-text" aria-live="polite"></p>
-        <p class="notice">ข้อมูลสถานที่ เส้นทาง และรีวิวจะเก็บในเบราว์เซอร์ของผู้ใช้แต่ละคนผ่าน LocalStorage ไม่ได้ซิงก์เป็นฐานข้อมูลกลาง รีวิวจากผู้ใช้คนอื่นจึงไม่ปรากฏบนอุปกรณ์อื่นโดยอัตโนมัติ</p>
+        <p class="notice">ข้อมูลสถานที่และวิดีโอจะซิงก์ผ่าน Cloud Firestore เมื่อเชื่อมต่อ Firebase แล้ว ส่วนรีวิวจะถูกเก็บออนไลน์และแสดงข้ามอุปกรณ์ด้วย โปรดตั้งค่า Firebase ตามคู่มือที่แนบมากับไฟล์เว็บไซต์</p>
       </section>
     </div>
   </dialog>
