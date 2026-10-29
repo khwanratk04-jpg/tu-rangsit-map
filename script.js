@@ -344,7 +344,6 @@ document.addEventListener("submit", event => {
     document.getElementById("findRoute").click();
   }
 });
-
 /* =========================================
    ระบบค้นหาสถานที่ TU Rangsit Map
 ========================================= */
