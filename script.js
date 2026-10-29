@@ -344,3 +344,241 @@ document.addEventListener("submit", event => {
     document.getElementById("findRoute").click();
   }
 });
+
+/* =========================================
+   ระบบค้นหาสถานที่ TU Rangsit Map
+========================================= */
+
+(function () {
+  "use strict";
+
+  const searchInput = document.getElementById("searchInput");
+  const clearSearch = document.getElementById("clearSearch");
+  const placeGrid = document.getElementById("placeGrid");
+  const placeCount = document.getElementById("placeCount");
+  const emptyState = document.getElementById("emptyState");
+  const categoryFilters = document.getElementById("categoryFilters");
+
+  if (!searchInput || !placeGrid) {
+    console.error("ไม่พบช่องค้นหาหรือพื้นที่แสดงรายการสถานที่");
+    return;
+  }
+
+  let currentCategory = "ทั้งหมด";
+
+  function normalize(value) {
+    return String(value || "")
+      .normalize("NFC")
+      .toLocaleLowerCase("th")
+      .trim();
+  }
+
+  function searchPlaces() {
+    const keyword = normalize(searchInput.value);
+    const places = Array.isArray(data.places) ? data.places : [];
+
+    const results = places.filter(function (place) {
+      const text = normalize([
+        place.name,
+        place.category,
+        place.description
+      ].join(" "));
+
+      const matchesKeyword = text.includes(keyword);
+      const matchesCategory =
+        currentCategory === "ทั้งหมด" ||
+        place.category === currentCategory;
+
+      return matchesKeyword && matchesCategory;
+    });
+
+    placeGrid.innerHTML = "";
+
+    if (placeCount) {
+      placeCount.textContent = results.length + " สถานที่";
+    }
+
+    if (emptyState) {
+      emptyState.classList.toggle("hidden", results.length > 0);
+      emptyState.hidden = results.length > 0;
+    }
+
+    results.forEach(function (place, index) {
+      const card = document.createElement("article");
+      card.className = "place-card";
+
+      const art = document.createElement("div");
+      art.className = "place-art";
+
+      const symbol = document.createElement("span");
+      symbol.className = "place-symbol";
+      symbol.textContent =
+        typeof getCategorySymbol === "function"
+          ? getCategorySymbol(place.category)
+          : "📍";
+
+      const number = document.createElement("span");
+      number.className = "place-number";
+      number.textContent = String(index + 1).padStart(2, "0");
+
+      art.append(symbol, number);
+
+      const body = document.createElement("div");
+      body.className = "place-card-body";
+
+      const category = document.createElement("span");
+      category.className = "category-label";
+      category.textContent = place.category || "อื่น ๆ";
+
+      const name = document.createElement("h3");
+      name.textContent = place.name;
+
+      const description = document.createElement("p");
+      description.textContent =
+        place.description || "ยังไม่มีคำอธิบายสถานที่";
+
+      const button = document.createElement("button");
+      button.className = "button button-primary";
+      button.type = "button";
+      button.textContent = "ดูรายละเอียด";
+
+      button.addEventListener("click", function () {
+        if (typeof showPlaceDetails === "function") {
+          showPlaceDetails(place.id);
+          return;
+        }
+
+        const panel = document.getElementById("detailPanel");
+
+        if (panel) {
+          panel.textContent =
+            place.name + " — " +
+            (place.description || "ยังไม่มีคำอธิบายสถานที่");
+        }
+      });
+
+      body.append(category, name, description, button);
+      card.append(art, body);
+      placeGrid.appendChild(card);
+    });
+  }
+
+  searchInput.addEventListener("input", searchPlaces);
+  searchInput.addEventListener("search", searchPlaces);
+
+  if (clearSearch) {
+    clearSearch.addEventListener("click", function () {
+      searchInput.value = "";
+      searchInput.focus();
+      searchPlaces();
+    });
+  }
+
+  if (categoryFilters) {
+    categoryFilters.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-category]");
+      if (!button) return;
+
+      currentCategory = button.dataset.category || "ทั้งหมด";
+
+      categoryFilters.querySelectorAll("[data-category]")
+        .forEach(function (item) {
+          item.classList.toggle("active", item === button);
+        });
+
+      searchPlaces();
+    });
+  }
+
+  searchPlaces();
+})();
+/* =========================================
+   กู้คืนระบบค้นหาเส้นทางต้นทาง-ปลายทาง
+========================================= */
+(function restoreRouteSearch() {
+  const from = document.getElementById("routeFrom");
+  const to = document.getElementById("routeTo");
+  const findButton = document.getElementById("findRoute");
+  const results = document.getElementById("routeResults");
+
+  // ตรวจสอบว่ามีช่องค้นหาอยู่ในหน้าเว็บหรือไม่
+  if (!from || !to || !findButton || !results) {
+    console.error(
+      "ไม่พบช่อง routeFrom, routeTo, findRoute หรือ routeResults ใน index.html"
+    );
+    return;
+  }
+
+  function populate(select, placeholder) {
+    const previousValue = select.value;
+    const places = Array.isArray(data.places) ? data.places : [];
+
+    select.replaceChildren(new Option(placeholder, ""));
+
+    places.forEach(function (place) {
+      select.add(new Option(place.name, place.id));
+    });
+
+    if (places.some(place => place.id === previousValue)) {
+      select.value = previousValue;
+    }
+  }
+
+  function refreshRoutePlaces() {
+    populate(from, "เลือกสถานที่ต้นทาง");
+    populate(to, "เลือกสถานที่ปลายทาง");
+
+    const adminFrom = document.getElementById("adminRouteFrom");
+    const adminTo = document.getElementById("adminRouteTo");
+
+    if (adminFrom) populate(adminFrom, "เลือกสถานที่ต้นทาง");
+    if (adminTo) populate(adminTo, "เลือกสถานที่ปลายทาง");
+  }
+
+  findButton.addEventListener("click", function () {
+    const fromId = from.value;
+    const toId = to.value;
+
+    if (!fromId || !toId) {
+      results.textContent = "กรุณาเลือกทั้งต้นทางและปลายทาง";
+      return;
+    }
+
+    if (fromId === toId) {
+      results.textContent =
+        "ต้นทางและปลายทางต้องเป็นคนละสถานที่";
+      return;
+    }
+
+    const routes = (data.routes || []).filter(route =>
+      route.fromId === fromId && route.toId === toId
+    );
+
+    if (routes.length === 0) {
+      results.textContent = "ยังไม่มีวิดีโอสำหรับเส้นทางนี้";
+      return;
+    }
+
+    results.replaceChildren();
+
+    routes.forEach(function (route) {
+      const item = document.createElement("article");
+      const heading = document.createElement("h3");
+      const description = document.createElement("p");
+      const link = document.createElement("a");
+
+      heading.textContent = route.name || "วิดีโอแนะนำเส้นทาง";
+      description.textContent = route.description || "";
+
+      link.href = route.videoUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "เปิดวิดีโอเส้นทาง";
+
+      item.append(heading, description, link);
+      results.appendChild(item);
+    });
+  });
+
+  refreshRoutePlaces();
+})();
